@@ -1,0 +1,35 @@
+# Build outputs
+build/
+rgcskim
+*.o
+
+# Skim outputs
+rootfiles/
+hipofiles/
+logs/
+*.root
+*.hipo
+
+# Local working config
+configs/skim.yaml
+
+# Temporary and editor files
+*~
+*.swp
+*.swo
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Large or private target maps
+configs/target_maps/*.csv
+
+# Keep the shared baseline target map
+!configs/target_maps/polarization_vs_run_results_preliminary_v1__1_(polarization_vs_run_results_pre).csv
+
+# Keep README files in ignored folders
+!configs/target_maps/README.md
+!configs/runlists/README.md

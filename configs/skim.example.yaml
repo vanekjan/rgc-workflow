@@ -1,0 +1,168 @@
+# skim.yaml
+# Edit this file, then run:
+#   ./run_skim.py skim.yaml --dry-run
+#   ./run_skim.py skim.yaml
+# Use --dry-run first to check the resolved run_all_hipo.sh command
+
+runner:
+  # Backend script called by run_skim.py. Do not change this.
+  script: scripts/run_all_hipo.sh
+
+input:
+  # Dataset tag used in output names.
+  # For normal RGC sidisdvcs trains, use: sidisdvcs
+  # If left empty, run_all_hipo.sh will infer it from the input folder name.
+  dataset: sidisdvcs
+
+  # HIPO input.
+  # This can be:
+  #   1. one .hipo file
+  #   2. one folder containing .hipo files
+  # Example full path folder:
+  #   /lustre24/expphy/cache/clas12/rg-c/production/fall22/pass1/ND3/dst/train/sidisdvcs/
+  #   /lustre24/expphy/cache/clas12/rg-c/production/summer22/pass1/10.5gev/ND3/dst/train/sidisdvcs/
+  #   /lustre24/expphy/cache/clas12/rg-c/production/spring23/pass1/ND3/dst/train/sidisdvcs/
+  #   path:  /path/to/sidisdvcs/
+  path:  /lustre24/expphy/cache/clas12/rg-c/production/summer22/pass1/10.5gev/ND3/dst/train/sidisdvcs/
+
+  # Output period subfolder.
+  # Allowed:
+  #   none      -> no period subfolder
+  #   auto      -> infer summer22, fall22, or spring23 from input path
+  #   summer22  -> force summer22 subfolder
+  #   fall22    -> force fall22 subfolder
+  #   spring23  -> force spring23 subfolder
+  # Recommended:
+  #   Use auto for full production paths.
+  #   Use none for local test folders unless you specifically want a period subfolder.
+  # Example with period: auto and Summer22 input:
+  #   rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1tf1/summer22/
+  period: auto
+
+
+skim:
+  # Skim channel.
+  # Allowed:
+  #   sidis      -> electron + selected hadron
+  #   inclusive  -> electron only
+  #   dihadron   -> electron + pi+ + pi-
+  mode: inclusive
+
+  # Inclusive region. Used only when mode: inclusive.
+  # Allowed:
+  #   all  -> all inclusive electron events passing loose cuts
+  #   dis  -> DIS region
+  #   res  -> resonance region
+  #   qe   -> quasi elastic candidate region
+  # Leave empty for sidis or dihadron.
+  region: qe
+
+  # Hadron PID. Used only when mode: sidis.
+  # Common choices:
+  #    211  -> pi+
+  #   -211  -> pi-
+  #    321  -> K+
+  #   -321  -> K-
+  #   2212  -> proton
+  # Leave empty for inclusive or dihadron.
+  pid:
+
+
+cuts:
+  # SIDIS electron diagnostic tree.
+  # Allowed:
+  #   0 -> do not write extra electron diagnostic tree
+  #   1 -> write extra electron diagnostic tree
+  # Only meaningful for mode: sidis.
+  # For inclusive mode, keep 0.
+  electrontree: 0
+
+  # Loose detector/PID cuts.
+  # Allowed:
+  #   0 -> no extra detector/PID cuts
+  #   1 -> apply loose detector/PID cuts
+  # Recommended for normal skims: 1
+  detpidcut: 1
+
+
+target:
+  # Optional target/polarization map.
+  # If empty, target metadata branches use default placeholder values.
+  # If targetfilter: matched, this file is required.
+  # map: configs/target_maps/your_target_map.csv
+  map: configs/target_maps/polarization_vs_run_results_preliminary_v1__1_(polarization_vs_run_results_pre).csv
+  
+
+  # Polarization source used for the generic target_pol/vector_pol branches.
+  # Allowed: offline, online
+  # Recommended: offline
+  polsource: offline
+
+  # Target run filtering.
+  # Allowed:
+  #   all      -> process all HIPO files
+  #   matched  -> process only runs found in the target map
+  # Recommended for ND3 target polarization analysis: matched
+  targetfilter: matched
+
+
+run_selection:
+  # File level run selection before rgcskim is launched.
+  # Allowed:
+  #   all           -> process all HIPO files in input path
+  #   test_one_run  -> process the first HIPO file that passes run/target filters
+  #   single        -> process one run
+  #   range         -> process inclusive run range
+  #   list          -> process runs listed below
+  #   file          -> process runs from a text file
+  # This filter is combined with targetfilter.
+  # Example:
+  #   mode: test_one_run + targetfilter: matched
+  # means:
+  #   use the first HIPO file whose run appears in the target map.
+  mode: test_one_run
+
+  # Used only for mode: single.
+  # Example:
+  #   mode: single
+  #   run: 16270
+  run:
+
+  # Used only for mode: range.
+  # Example:
+  #   mode: range
+  #   start: 16270
+  #   end: 16320
+  start:
+  end:
+
+  # Used only for mode: list.
+  # Leading zeros are optional.
+  # Example:
+  #   runs: [16270, 16272, 16275]
+  runs: []
+
+  # Used only for mode: file.
+  # File format: one run number per line
+  # Blank lines and lines beginning with # are ignored.
+  # Example:
+  #   runlist: configs/runlists/test_runs.txt
+  runlist:
+
+
+output:
+  # Output format.
+  # Allowed:
+  #   root  -> write ROOT skim only
+  #   hipo  -> write filtered HIPO skim only
+  #   both  -> write ROOT and filtered HIPO skims
+  # Recommended for normal analysis: root
+  format: root
+
+  # Optional extra output subfolder.
+  # Recommended for tests or selected run skims so they do not mix with full production output.
+  # Example:
+  #   jobtag: runs_16270_16273
+  # If empty, files are written directly into the normal channel folder.
+  # For test_one_run, using a jobtag is recommended.
+  jobtag: test_one_run
