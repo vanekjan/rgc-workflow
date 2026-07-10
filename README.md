@@ -6,7 +6,7 @@ The framework supports inclusive electron, single hadron SIDIS, and dihadron `e 
 
 ---
 
-## 1. Purpose
+## Purpose
 
 The goal of this framework is to provide a reproducible and organized workflow for RGC data skimming.
 
@@ -22,7 +22,7 @@ It is designed to:
 
 ---
 
-## 2. Supported Skim Modes
+## Supported Skim Modes
 
 | Mode | Physics channel | Description |
 |---|---|---|
@@ -32,7 +32,7 @@ It is designed to:
 
 ---
 
-## 3. Repository Layout
+## Repository Layout
 
 ```text
 rgcskim/
@@ -69,29 +69,7 @@ rgcskim/
 
 ---
 
-## 4. Generated Files Not Tracked by Git
-
-The following files and folders are generated locally and are intentionally ignored by Git:
-
-```text
-build/
-rgcskim
-rootfiles/
-hipofiles/
-logs/
-*.root
-*.hipo
-configs/skim.yaml
-scripts/__pycache__/
-```
-
-The local file `configs/skim.yaml` is ignored because each user may have different paths, run selections, and job tags.
-
-The shared target map CSV is tracked because it is used as a common input for the skim workflow.
-
----
-
-## 5. Setup
+## Setup
 
 Start from the repository directory:
 
@@ -117,7 +95,7 @@ python3 -m py_compile scripts/run_skim.py
 
 ---
 
-## 6. Recommended Workflow
+## Recommended Workflow
 
 The recommended workflow is to use the YAML wrapper.
 
@@ -160,7 +138,7 @@ No skim is executed during a dry run.
 
 ---
 
-## 7. YAML Configuration Guide
+## YAML Configuration Guide
 
 The main local configuration file is:
 
@@ -208,7 +186,7 @@ output:
 
 ---
 
-## 8. Input Section
+## Input Section
 
 ```yaml
 input:
@@ -249,7 +227,7 @@ Example RGC production paths:
 
 ---
 
-## 9. Skim Section
+## Skim Section
 
 ```yaml
 skim:
@@ -314,7 +292,7 @@ e pi+ pi-
 
 ---
 
-## 10. Cuts Section
+## Cuts Section
 
 ```yaml
 cuts:
@@ -344,7 +322,7 @@ For inclusive and dihadron modes, `electrontree` is forced to `0`.
 
 ---
 
-## 11. Target Map Section
+## Target Map Section
 
 ```yaml
 target:
@@ -399,7 +377,7 @@ run,start_time,stop_time,species,cell,charge_avg_online,charge_avg_offline,charg
 
 ---
 
-## 12. Run Selection Section
+## Run Selection Section
 
 ```yaml
 run_selection:
@@ -476,7 +454,7 @@ Blank lines and lines beginning with `#` are ignored.
 
 ---
 
-## 13. Output Section
+## Output Section
 
 ```yaml
 output:
@@ -512,7 +490,7 @@ output:
 
 ---
 
-## 14. Output Folder Structure
+## Output Folder Structure
 
 Output folders are built from:
 
@@ -560,72 +538,7 @@ targetfilter = matched
 
 ---
 
-## 15. Direct Bash Runner
-
-The YAML wrapper ultimately calls:
-
-```text
-scripts/run_all_hipo.sh
-```
-
-You can also run it directly.
-
-### Inclusive QE example
-
-```bash
-./scripts/run_all_hipo.sh \
-  --dataset sidisdvcs \
-  --mode inclusive \
-  --region qe \
-  /path/to/sidisdvcs/ \
-  --detpidcut 1 \
-  --targetmap configs/target_maps/polarization_vs_run_results_preliminary_v1__1_\(polarization_vs_run_results_pre\).csv \
-  --polsource offline \
-  --targetfilter matched \
-  --period auto \
-  --outformat root \
-  --test-one-run \
-  --jobtag test_one_run
-```
-
-### SIDIS pi+ example
-
-```bash
-./scripts/run_all_hipo.sh \
-  --dataset sidisdvcs \
-  --mode sidis \
-  --pid 211 \
-  /path/to/sidisdvcs/ \
-  --detpidcut 1 \
-  --targetmap configs/target_maps/polarization_vs_run_results_preliminary_v1__1_\(polarization_vs_run_results_pre\).csv \
-  --polsource offline \
-  --targetfilter matched \
-  --period auto \
-  --outformat root \
-  --test-one-run \
-  --jobtag epip_test
-```
-
-### Dihadron example
-
-```bash
-./scripts/run_all_hipo.sh \
-  --dataset sidisdvcs \
-  --mode dihadron \
-  /path/to/sidisdvcs/ \
-  --detpidcut 1 \
-  --targetmap configs/target_maps/polarization_vs_run_results_preliminary_v1__1_\(polarization_vs_run_results_pre\).csv \
-  --polsource offline \
-  --targetfilter matched \
-  --period auto \
-  --outformat root \
-  --test-one-run \
-  --jobtag dihadron_test
-```
-
----
-
-## 16. Standard Checks Before Production
+## Standard Checks Before Production
 
 Before running a larger skim, run:
 
@@ -655,7 +568,7 @@ or use a controlled run list.
 
 ---
 
-## 18. Recommended Production Procedure
+## Recommended Production Procedure
 
 1. Update `configs/skim.yaml`.
 2. Run a dry run.
