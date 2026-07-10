@@ -69,6 +69,30 @@ rgcskim/
 
 ---
 
+## Clone the Repository
+
+Clone the repository from GitHub:
+
+```bash
+git clone https://github.com/utsav-sth/rgcskim.git
+cd rgcskim
+```
+
+This creates a local folder named:
+
+```text
+rgcskim/
+```
+
+To clone into a custom folder name, use:
+
+```bash
+git clone https://github.com/utsav-sth/rgcskim.git your_folder_name
+cd your_folder_name
+```
+
+---
+
 ## Setup
 
 Start from the repository directory:
@@ -319,6 +343,109 @@ detpidcut: 1
 ```
 
 For inclusive and dihadron modes, `electrontree` is forced to `0`.
+
+---
+
+## Event Selection and Cut Summary
+
+This section summarizes the main event selection logic used by the skim. The exact implementation is in `src/rgcskim.cc`.
+
+### Common electron candidate selection
+
+| Cut category | Requirement | Applied when |
+|---|---|---|
+| Electron PID | `pid == 11` | All modes |
+| Inclusive electron status | `-4000 < status <= -2000` and `REC::Particle` row 0 is used when inclusive row 0 mode is enabled | Inclusive mode |
+| SIDIS and dihadron electron status | `status / 1000 == -2` | SIDIS and dihadron modes |
+| Electron choice | Row 0 for inclusive mode, highest momentum accepted electron for SIDIS and dihadron modes | Mode dependent |
+
+### Loose electron detector and PID cuts
+
+These cuts are applied only when:
+
+```yaml
+detpidcut: 1
+```
+
+| Cut category | Requirement |
+|---|---|
+| Charge | `charge == -1` |
+| HTCC match | `has_htcc == 1` |
+| HTCC photoelectrons | `htcc_nphe > 2.0` |
+| Calorimeter match | `has_cal == 1` |
+| PCAL energy | `pcal_e > 0.0` |
+| Total calorimeter energy | `cal_e > 0.0` |
+| Sampling fraction | `sampling_fraction > 0.10` |
+| PCAL local coordinates | `lu > 0.0`, `lv > 0.0`, `lw > 0.0` |
+
+### Inclusive region selection
+
+Inclusive kinematics are calculated from the selected electron using the beam energy defined in `src/rgcskim.cc`. The skim stores both nucleon level and deuteron level quantities.
+
+| Quantity | Definition |
+|---|---|
+| `Q2` | `-q^2` |
+| `nu` | Virtual photon energy |
+| `W` | Nucleon level invariant mass, used for DIS and resonance separation |
+| `Wd` | Deuteron system invariant mass, stored separately |
+| `xB` | Nucleon Bjorken x |
+| `xD` | Deuteron x |
+| `y` | `nu / beam_energy` |
+
+Allowed inclusive regions:
+
+| Region | Requirement |
+|---|---|
+| `all` | Keep all accepted inclusive electron events |
+| `dis` | `W > 2.0` |
+| `res` | `0.0 < W < 2.0` |
+| `qe` | Broad quasi elastic skim flag with `Q2 > 0.2`, `0.5 < xB < 2.1`, and `0.0 < y < 1.0` |
+
+The `qe` region is intentionally broad at the skim level. Final physics cuts should be applied later in the analysis stage.
+
+### SIDIS selection
+
+SIDIS mode requires at least one accepted electron and at least one selected hadron.
+
+| Selection item | Requirement |
+|---|---|
+| Electron | `pid == 11` and `status / 1000 == -2` |
+| Selected hadron | `pid == selected_hadron_pid` and `status / 1000 == 2` |
+| Event topology | At least one accepted electron and at least one selected hadron |
+| Output rows | One row is written for each selected hadron paired with the best electron |
+
+When `detpidcut: 1` is used, the hadron must also pass the loose sanity cuts below.
+
+| Hadron cut category | Requirement |
+|---|---|
+| Beta | `beta > 0.0` |
+| Charge consistency | Positive PID requires positive charge, negative PID requires negative charge |
+
+No SIDIS kinematic cuts such as `Q2`, `W`, `x`, `z`, `pT`, or missing mass are applied in the skim.
+
+### Dihadron selection
+
+Dihadron mode currently selects the `e pi+ pi-` channel.
+
+| Selection item | Requirement |
+|---|---|
+| Electron | `pid == 11` and `status / 1000 == -2` |
+| `pi+` | `pid == 211` and `status / 1000 == 2` |
+| `pi-` | `pid == -211` and `status / 1000 == 2` |
+| Event topology | At least one accepted electron, one `pi+`, and one `pi-` |
+| Output rows | One row is written for each accepted `pi+ pi-` pair with the best electron |
+
+When `detpidcut: 1` is used, the electron and pions must also pass the loose detector and PID sanity checks.
+
+### Target and scaler handling
+
+| Item | Behavior |
+|---|---|
+| Target map | If `targetfilter: matched`, only runs found in the target map are processed |
+| Polarization source | `offline` or `online` target polarization can be selected |
+| Scaler tree | `HEL::scaler` information is stored for FCup and helicity normalization |
+| HIPO output | HIPO output preserves selected physics events and scaler events |
+
 
 ---
 
