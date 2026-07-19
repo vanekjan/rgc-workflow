@@ -390,6 +390,7 @@ skim:
 
 cuts:
   detpidcut: 1
+```
 
 ### Inclusive region selection
 
