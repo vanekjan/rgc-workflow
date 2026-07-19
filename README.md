@@ -327,7 +327,7 @@ cuts:
 | Field | Meaning |
 |---|---|
 | `electrontree` | Writes an extra diagnostic electron tree in SIDIS mode |
-| `detpidcut` | Applies loose detector and PID quality cuts |
+| `detpidcut` | Applies detector and PID quality cuts. For inclusive `dis`, this applies the dedicated inclusive DIS cut set |
 
 Allowed values:
 
@@ -343,6 +343,7 @@ detpidcut: 1
 ```
 
 For inclusive and dihadron modes, `electrontree` is forced to `0`.
+For inclusive DIS skims, `detpidcut: 1` applies a dedicated inclusive DIS electron cut set. For inclusive `all`, `res`, and `qe`, the skim keeps the looser electron detector and PID cuts described below.
 
 ---
 
@@ -359,9 +360,9 @@ This section summarizes the main event selection logic used by the skim. The exa
 | SIDIS and dihadron electron status | `status / 1000 == -2` | SIDIS and dihadron modes |
 | Electron choice | Row 0 for inclusive mode, highest momentum accepted electron for SIDIS and dihadron modes | Mode dependent |
 
-### Loose electron detector and PID cuts
+### Loose electron detector and PID cuts for non DIS inclusive regions
 
-These cuts are applied only when:
+These cuts are applied only when `detpidcut: 1` is used for inclusive `all`, `res`, `qe`, SIDIS, or dihadron skims:
 
 ```yaml
 detpidcut: 1
@@ -377,6 +378,18 @@ detpidcut: 1
 | Total calorimeter energy | `cal_e > 0.0` |
 | Sampling fraction | `sampling_fraction > 0.10` |
 | PCAL local coordinates | `lu > 0.0`, `lv > 0.0`, `lw > 0.0` |
+
+### Inclusive DIS cut set
+
+For inclusive `dis` skims, the following dedicated DIS electron cuts are applied when:
+
+```yaml
+skim:
+  mode: inclusive
+  region: dis
+
+cuts:
+  detpidcut: 1
 
 ### Inclusive region selection
 
@@ -397,7 +410,7 @@ Allowed inclusive regions:
 | Region | Requirement |
 |---|---|
 | `all` | Keep all accepted inclusive electron events |
-| `dis` | `W > 2.0` |
+| `dis` | `W > 2.0`; if `detpidcut: 1`, the dedicated inclusive DIS cut set is also applied |
 | `res` | `0.0 < W < 2.0` |
 | `qe` | Broad quasi elastic skim flag with `Q2 > 0.2`, `0.5 < xB < 2.1`, and `0.0 < y < 1.0` |
 
