@@ -75,6 +75,55 @@ const double M_p = 0.938272088;      // proton mass in GeV
 const double M_pion = 0.13957039;    // charged pion mass in GeV
 const double M_electron = 0.000510999; // electron mass in GeV
 
+// FCup-style inclusive DIS electron cuts.
+// These are used only for:
+//   --mode inclusive --region dis --detpidcut 1
+// They are kept separate from the loose generic detector/PID cuts
+// so SIDIS, dihadron, and broad QE studies are not unintentionally tightened.
+
+const double FCUP_DIS_Q2_MIN = 1.0;
+const double FCUP_DIS_W_MIN = 2.0;
+const double FCUP_DIS_EP_MIN = 2.6;
+
+const double FCUP_DIS_THETA_MIN_DEG = 5.0;
+const double FCUP_DIS_THETA_MAX_DEG = 40.0;
+
+const double FCUP_DIS_VZ_MIN = -5.758;
+const double FCUP_DIS_VZ_MAX = 1.515;
+
+const double FCUP_DIS_NPHE_MIN = 2.0;
+const double FCUP_DIS_PCAL_E_MIN = 0.06;
+
+const double FCUP_DIS_PCAL_LVW_S1 = 22.5;
+const double FCUP_DIS_PCAL_LVW_S26 = 13.5;
+
+const int FCUP_DIS_DC_DETECTOR = 6;
+const int FCUP_DIS_DC_LAYER_R1 = 6;
+const int FCUP_DIS_DC_LAYER_R2 = 18;
+const int FCUP_DIS_DC_LAYER_R3 = 36;
+
+const double FCUP_DIS_DC_EDGE_R1 = 4.0;
+const double FCUP_DIS_DC_EDGE_R2 = 5.0;
+const double FCUP_DIS_DC_EDGE_R3 = 8.0;
+
+const double FCUP_DIS_SF_LOW[6][3] = {
+    {0.188243, +0.004928, -0.000498},
+    {0.183701, +0.008171, -0.000765},
+    {0.185788, +0.007974, -0.000773},
+    {0.177398, +0.010710, -0.000954},
+    {0.181192, +0.007219, -0.000601},
+    {0.187191, +0.005478, -0.000496}
+};
+
+const double FCUP_DIS_SF_HIGH[6][3] = {
+    {0.308340, -0.007150, +0.000487},
+    {0.310391, -0.003058, -0.000184},
+    {0.310277, -0.004496, -0.000111},
+    {0.314889, -0.003913, -0.000101},
+    {0.312211, -0.007023, +0.000140},
+    {0.309825, -0.004853, -0.000123}
+};
+
 typedef unordered_map<int,vector<int>> vectorMap;
 
 // Container for detector/PID information connected to one REC:Particle row.
@@ -98,6 +147,18 @@ struct DetectorInfo {
     float lu = -9999;
     float lv = -9999;
     float lw = -9999;
+};
+
+// Container for DC fiducial edge information from REC::Traj.
+// This is needed for the FCup-style inclusive DIS electron cut.
+struct DCEdgeInfo {
+    float edge_r1 = -9999;
+    float edge_r2 = -9999;
+    float edge_r3 = -9999;
+
+    int has_r1 = 0;
+    int has_r2 = 0;
+    int has_r3 = 0;
 };
 
 // Container for event level information.
@@ -327,6 +388,34 @@ bool passInclusiveRegion(
     const string &inclusiveRegion
 );
 
+DCEdgeInfo getDCEdgeInfo(
+    int pindex,
+    hipo::bank bankTraj
+);
+
+bool passFCupSamplingFraction(
+    int sector,
+    double p,
+    double sampling_fraction
+);
+
+bool passFCupPCALFiducial(
+    int sector,
+    double lv,
+    double lw
+);
+
+bool passFCupDCFiducial(
+    const DCEdgeInfo &dcInfo
+);
+
+bool passInclusiveDISFCupCuts(
+    const ParticleCandidate &electron,
+    const DetectorInfo &eDet,
+    const DCEdgeInfo &dcInfo,
+    const InclusiveKin &kin
+);
+
 vector<string> splitCSVLine(
     const string &line
 );
@@ -494,7 +583,7 @@ int main(int argc, char** argv) {
 
         cout << "Options:" << endl;
         cout << "  --electrontree 0 or 1    Write the extra electrons tree in SIDIS mode. Default = 0" << endl;
-        cout << "  --detpidcut    0 or 1    Apply loose detector/PID cuts. Default = 0" << endl;
+        cout << "  --detpidcut    0 or 1    Apply detector/PID cuts. For inclusive DIS, this applies FCup-style DIS cuts. Default = 0" << endl;
         cout << "  --outformat    root, hipo, or both. Default = root" << endl;
         cout << endl;
 
@@ -2044,6 +2133,7 @@ int main(int argc, char** argv) {
                 hipoWriter.getDictionary().addSchema(factory.getSchema("REC::Particle"));
                 hipoWriter.getDictionary().addSchema(factory.getSchema("REC::Calorimeter"));
                 hipoWriter.getDictionary().addSchema(factory.getSchema("REC::Cherenkov"));
+                hipoWriter.getDictionary().addSchema(factory.getSchema("REC::Traj"));
                 hipoWriter.getDictionary().addSchema(factory.getSchema("REC::Event"));
                 hipoWriter.getDictionary().addSchema(factory.getSchema("RUN::config"));
                 hipoWriter.getDictionary().addSchema(factory.getSchema("HEL::scaler"));
@@ -2053,6 +2143,7 @@ int main(int argc, char** argv) {
             hipo::bank  particles(factory.getSchema("REC::Particle"));
             hipo::bank  calorimeter(factory.getSchema("REC::Calorimeter"));
             hipo::bank  cherenkov(factory.getSchema("REC::Cherenkov"));
+            hipo::bank  trajectory(factory.getSchema("REC::Traj"));
 
             // event level banks.
             // REC::Event provides helicity and event level reconstruction quantities.
@@ -2080,6 +2171,7 @@ int main(int argc, char** argv) {
                 event.getStructure(particles);
                 event.getStructure(calorimeter);
                 event.getStructure(cherenkov);
+                event.getStructure(trajectory);
 
                 // event level banks.
                 // These are needed for helicity and run/event metadata.
@@ -2345,15 +2437,33 @@ int main(int argc, char** argv) {
                 // ============================================================
 
                 if(skimMode == "inclusive"){
-                    // Optional loose electron detector/PID cuts.
+
+                    InclusiveKin incKin = calculateInclusiveKinematics(bestElectron);
+
+                    // Optional detector/PID cuts.
+                    // For inclusive DIS, use the FCup-style DIS electron cut chain.
+                    // For all/res/qe, keep the original loose electron detector/PID cuts.
                     if(applyDetPidCut == 1){
-                        bool good_e = passElectronDetPidCuts(bestElectronDet);
+                        bool good_e = false;
+                        if(inclusiveRegion == "dis"){
+                            DCEdgeInfo bestElectronDC = getDCEdgeInfo(
+                                bestElectron.pindex,
+                                trajectory
+                            );
+                            good_e = passInclusiveDISFCupCuts(
+                                bestElectron,
+                                bestElectronDet,
+                                bestElectronDC,
+                                incKin
+                            );
+                        }else{
+                            good_e = passElectronDetPidCuts(bestElectronDet);
+                        }
+
                         if(!good_e){
                             continue;
                         }
                     }
-
-                    InclusiveKin incKin = calculateInclusiveKinematics(bestElectron);
 
                     inclusive_events_seen++;
 
@@ -3808,6 +3918,169 @@ DetectorInfo getDetectorInfo(
     }
 
     return info;
+}
+
+// Read DC fiducial edge information from REC::Traj for one REC::Particle row.
+// This reproduces the DC edge quantities used in the FCup inclusive DIS code.
+
+DCEdgeInfo getDCEdgeInfo(
+    int pindex,
+    hipo::bank bankTraj
+){
+    DCEdgeInfo info;
+
+    for(int irow = 0; irow < bankTraj.getRows(); irow++){
+
+        if(bankTraj.getInt("pindex", irow) != pindex) continue;
+        if(bankTraj.getInt("detector", irow) != FCUP_DIS_DC_DETECTOR) continue;
+
+        int layer = bankTraj.getInt("layer", irow);
+        float edge = bankTraj.getFloat("edge", irow);
+
+        if(layer == FCUP_DIS_DC_LAYER_R1){
+            info.edge_r1 = edge;
+            info.has_r1 = 1;
+        }
+
+        if(layer == FCUP_DIS_DC_LAYER_R2){
+            info.edge_r2 = edge;
+            info.has_r2 = 1;
+        }
+
+        if(layer == FCUP_DIS_DC_LAYER_R3){
+            info.edge_r3 = edge;
+            info.has_r3 = 1;
+        }
+    }
+
+    return info;
+}
+
+// Sector dependent sampling fraction cut used by the FCup DIS code.
+
+bool passFCupSamplingFraction(
+    int sector,
+    double p,
+    double sampling_fraction
+){
+    if(sector < 1 || sector > 6) return false;
+    if(p <= 0.0) return false;
+
+    int idx = sector - 1;
+
+    double sf_low =
+        FCUP_DIS_SF_LOW[idx][0] +
+        FCUP_DIS_SF_LOW[idx][1] * p +
+        FCUP_DIS_SF_LOW[idx][2] * p * p;
+
+    double sf_high =
+        FCUP_DIS_SF_HIGH[idx][0] +
+        FCUP_DIS_SF_HIGH[idx][1] * p +
+        FCUP_DIS_SF_HIGH[idx][2] * p * p;
+
+    if(sampling_fraction <= sf_low) return false;
+    if(sampling_fraction >= sf_high) return false;
+
+    return true;
+}
+
+// PCAL fiducial cut used by the FCup DIS code.
+// Sector 1 uses a tighter lv/lw minimum than sectors 2 through 6.
+
+bool passFCupPCALFiducial(
+    int sector,
+    double lv,
+    double lw
+){
+    if(sector < 1 || sector > 6) return false;
+
+    double min_lvw = FCUP_DIS_PCAL_LVW_S26;
+
+    if(sector == 1){
+        min_lvw = FCUP_DIS_PCAL_LVW_S1;
+    }
+
+    if(lv <= min_lvw) return false;
+    if(lw <= min_lvw) return false;
+
+    return true;
+}
+
+// DC fiducial edge cut used by the FCup DIS code.
+
+bool passFCupDCFiducial(
+    const DCEdgeInfo &dcInfo
+){
+    if(dcInfo.has_r1 != 1) return false;
+    if(dcInfo.has_r2 != 1) return false;
+    if(dcInfo.has_r3 != 1) return false;
+
+    if(dcInfo.edge_r1 <= FCUP_DIS_DC_EDGE_R1) return false;
+    if(dcInfo.edge_r2 <= FCUP_DIS_DC_EDGE_R2) return false;
+    if(dcInfo.edge_r3 <= FCUP_DIS_DC_EDGE_R3) return false;
+
+    return true;
+}
+
+// Full FCup-style inclusive DIS electron cut.
+// This should be used only for:
+//   --mode inclusive --region dis --detpidcut 1
+// It intentionally includes kinematic DIS cuts and detector/fiducial cuts.
+// Do not use this for broad QE skims unless you intentionally want DIS-style electron cuts.
+
+bool passInclusiveDISFCupCuts(
+    const ParticleCandidate &electron,
+    const DetectorInfo &eDet,
+    const DCEdgeInfo &dcInfo,
+    const InclusiveKin &kin
+){
+    double theta_deg = electron.theta * 180.0 / TMath::Pi();
+
+    // DIS kinematic cuts.
+    if(kin.W <= FCUP_DIS_W_MIN) return false;
+    if(kin.Q2 <= FCUP_DIS_Q2_MIN) return false;
+    if(electron.p <= FCUP_DIS_EP_MIN) return false;
+
+    // Electron angular and vertex cuts.
+    if(theta_deg <= FCUP_DIS_THETA_MIN_DEG) return false;
+    if(theta_deg >= FCUP_DIS_THETA_MAX_DEG) return false;
+
+    if(electron.vz < FCUP_DIS_VZ_MIN) return false;
+    if(electron.vz > FCUP_DIS_VZ_MAX) return false;
+
+    // HTCC cut.
+    // FCup code uses nphe >= 2.
+    if(eDet.has_htcc != 1) return false;
+    if(eDet.htcc_nphe < FCUP_DIS_NPHE_MIN) return false;
+
+    // Calorimeter and PCAL cuts.
+    if(eDet.has_cal != 1) return false;
+    if(eDet.cal_e <= 0.0) return false;
+    if(eDet.cal_sector < 1 || eDet.cal_sector > 6) return false;
+
+    if(eDet.pcal_e <= FCUP_DIS_PCAL_E_MIN) return false;
+
+    if(!passFCupSamplingFraction(
+        eDet.cal_sector,
+        electron.p,
+        eDet.sampling_fraction
+    )){
+        return false;
+    }
+
+    if(!passFCupPCALFiducial(
+        eDet.cal_sector,
+        eDet.lv,
+        eDet.lw
+    )){
+        return false;
+    }
+
+    if(!passFCupDCFiducial(dcInfo)){
+        return false;
+    }
+
+    return true;
 }
 
 // Loose detector/PID cuts for inclusive electron only mode.
