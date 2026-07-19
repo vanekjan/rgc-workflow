@@ -392,6 +392,54 @@ cuts:
   detpidcut: 1
 ```
 
+| Cut category | Requirement |
+|---|---|
+| DIS invariant mass | `W > 2.0` |
+| Four momentum transfer | `Q2 > 1.0` |
+| Electron momentum | `pe > 2.6` |
+| Electron angle | `5.0 < thetae < 40.0` degrees |
+| Electron vertex | `-5.758 <= vze <= 1.515` |
+| HTCC match | `has_htcc == 1` |
+| HTCC photoelectrons | `htcc_nphe >= 2.0` |
+| Calorimeter match | `has_cal == 1` |
+| PCAL energy | `pcal_e > 0.06` |
+| Sampling fraction | Sector dependent lower and upper sampling fraction window |
+| PCAL fiducial cut | Sector dependent `lv` and `lw` cuts |
+| DC fiducial cut | Region dependent DC edge cuts from `REC::Traj` |
+
+The sampling fraction cut uses the electron calorimeter sector and momentum:
+
+```text
+SF_low  = a0 + a1 * pe + a2 * pe^2
+SF_high = b0 + b1 * pe + b2 * pe^2
+```
+
+| Sector | `SF_low` coefficients `(a0, a1, a2)` | `SF_high` coefficients `(b0, b1, b2)` |
+|---|---|---|
+| 1 | `(0.188243, 0.004928, -0.000498)` | `(0.308340, -0.007150, 0.000487)` |
+| 2 | `(0.183701, 0.008171, -0.000765)` | `(0.310391, -0.003058, -0.000184)` |
+| 3 | `(0.185788, 0.007974, -0.000773)` | `(0.310277, -0.004496, -0.000111)` |
+| 4 | `(0.177398, 0.010710, -0.000954)` | `(0.314889, -0.003913, -0.000101)` |
+| 5 | `(0.181192, 0.007219, -0.000601)` | `(0.312211, -0.007023, 0.000140)` |
+| 6 | `(0.187191, 0.005478, -0.000496)` | `(0.309825, -0.004853, -0.000123)` |
+
+The PCAL fiducial cut uses:
+
+| Sector | Requirement |
+|---|---|
+| 1 | `lv > 22.5` and `lw > 22.5` |
+| 2 to 6 | `lv > 13.5` and `lw > 13.5` |
+
+The DC fiducial cut uses `REC::Traj` edge information:
+
+| DC region | REC::Traj layer | Requirement |
+|---|---|---|
+| Region 1 | `layer == 6` | `edge > 4.0` |
+| Region 2 | `layer == 18` | `edge > 5.0` |
+| Region 3 | `layer == 36` | `edge > 8.0` |
+
+The inclusive DIS cut set is applied only to `region: dis` when `detpidcut: 1` is selected. It is not applied to inclusive `all`, `res`, `qe`, SIDIS, or dihadron skims.
+
 ### Inclusive region selection
 
 Inclusive kinematics are calculated from the selected electron using the beam energy defined in `src/rgcskim.cc`. The skim stores both nucleon level and deuteron level quantities.
