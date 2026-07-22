@@ -125,7 +125,7 @@ def infer_dataset_tag(dataset, hipo_path):
     return os.path.basename(os.path.dirname(os.path.normpath(hipo_path)))
 
 
-def build_predicted_output(dataset, hipo_path, period, mode, region, pid, electron_tree, det_pid_cut, targetfilter, jobtag, output_format):
+def build_predicted_output(dataset, hipo_path, period, mode, region, pid, electron_tree, det_pid_cut, kin_cut, targetfilter, jobtag, output_format):
     dataset_tag = infer_dataset_tag(dataset, hipo_path)
 
     if mode == "sidis":
@@ -161,7 +161,7 @@ def build_predicted_output(dataset, hipo_path, period, mode, region, pid, electr
     else:
         electron_tree_for_tag = electron_tree
 
-    option_tag = f"eT{electron_tree_for_tag}pid{det_pid_cut}{target_filter_tag}"
+    option_tag = f"eT{electron_tree_for_tag}pid{det_pid_cut}kin{kin_cut}{target_filter_tag}"
     subdir_tag = f"skim_{dataset_tag}_{channel_tag}_{option_tag}"
 
     if period == "none":
@@ -227,6 +227,7 @@ def build_command(cfg):
 
     electron_tree = as_int_string(cuts.get("electrontree", 0), "cuts.electrontree")
     det_pid_cut = as_int_string(cuts.get("detpidcut", 0), "cuts.detpidcut")
+    kin_cut = as_int_string(cuts.get("kincut", 0), "cuts.kincut")
 
     target_map = as_string(target.get("map", ""))
     polsource = normalize_lower(target.get("polsource", "offline"))
@@ -262,6 +263,10 @@ def build_command(cfg):
 
     if det_pid_cut not in ["0", "1"]:
         print("Error: cuts.detpidcut must be 0 or 1.")
+        sys.exit(1)
+
+    if kin_cut not in ["0", "1"]:
+        print("Error: cuts.kincut must be 0 or 1.")
         sys.exit(1)
 
     # ------------------------------------------------------------
@@ -411,6 +416,7 @@ def build_command(cfg):
         cmd += ["--electrontree", electron_tree]
 
     cmd += ["--detpidcut", det_pid_cut]
+    cmd += ["--kincut", kin_cut]
 
     if target_map != "":
         cmd += ["--targetmap", target_map]
@@ -448,6 +454,7 @@ def build_command(cfg):
         "pid": pid if mode == "sidis" else "(not used)",
         "electrontree": electron_tree if mode == "sidis" else "(not used)",
         "detpidcut": det_pid_cut,
+        "kincut": kin_cut,
         "output_format": output_format,
         "target_map": target_map if target_map else "(none)",
         "polsource": polsource if target_map else "(not used)",
@@ -476,6 +483,7 @@ def build_command(cfg):
         pid,
         electron_tree,
         det_pid_cut,
+        kin_cut,
         targetfilter,
         jobtag,
         output_format,
@@ -497,6 +505,7 @@ def print_summary(summary, cmd):
     print(f"PID:             {summary['pid']}")
     print(f"Electron tree:   {summary['electrontree']}")
     print(f"Detector/PID cut:{summary['detpidcut']}")
+    print(f"Kinematic cut:   {summary['kincut']}")
     print(f"Output format:   {summary['output_format']}")
     print(f"Target map:      {summary['target_map']}")
     print(f"Polarization src:{summary['polsource']}")

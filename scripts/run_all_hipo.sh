@@ -7,9 +7,10 @@
 #   inclusive  : electron only, region = all, dis, res, qe
 #   dihadron   : electron + pi+ + pi-
 # Common examples:
-#   ./run_all_hipo.sh --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1
+#   ./run_all_hipo.sh --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --kincut 1
 #   ./run_all_hipo.sh --mode sidis --pid 211 /path/to/sidisdvcs --detpidcut 1
 # Useful options:
+#   --detpidcut 0|1 --kincut 0|1
 #   --targetmap <csv> --polsource offline|online --targetfilter all|matched
 #   --period auto|none|summer22|fall22|spring23
 #   --test-one-run
@@ -33,7 +34,8 @@ print_usage(){
     echo "Options:"
     echo "  --dataset <tag>                 Override dataset tag. Default = basename of HIPO folder"
     echo "  --electrontree 0|1              SIDIS diagnostic electron tree. Default = 0"
-    echo "  --detpidcut 0|1                 Apply loose detector/PID cuts. Default = 0"
+    echo "  --detpidcut 0|1                 Apply detector/PID cuts. Default = 0"
+    echo "  --kincut 0|1                    Apply dedicated region kinematic cuts. Default = 0"
     echo "  --targetmap <csv>               Optional run-level target/polarization CSV"
     echo "  --polsource offline|online      Polarization source for target_pol/vector_pol. Default = offline"
     echo "  --targetfilter all|matched      all = process all files, matched = process target-map runs only"
@@ -58,16 +60,16 @@ print_usage(){
     echo "Examples:"
     echo ""
     echo "  Inclusive QE with target map and automatic period subfolder:"
-    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto"
+    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --kincut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto"
     echo ""
     echo "  Inclusive QE test using first target-matched run from a folder:"
-    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto --test-one-run --jobtag test_one_run"
+    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --kincut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto --test-one-run --jobtag test_one_run"
     echo ""
     echo "  Inclusive QE test writing ROOT and filtered HIPO output:"
-    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto --test-one-run --outformat both --jobtag test_one_run"
+    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --kincut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto --test-one-run --outformat both --jobtag test_one_run"
     echo ""
     echo "  Inclusive QE for one run only:"
-    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto --run 16270 --jobtag test_16270"
+    echo "    $0 --mode inclusive --region qe /path/to/sidisdvcs --detpidcut 1 --kincut 1 --targetmap target.csv --polsource offline --targetfilter matched --period auto --run 16270 --jobtag test_16270"
     echo ""
     echo "  SIDIS pi-plus:"
     echo "    $0 --mode sidis --pid 211 /path/to/sidisdvcs --detpidcut 1"
@@ -90,8 +92,11 @@ HIPO_INPUT=""
 ELECTRON_TREE=0
 ELECTRON_TREE_USER_SET=0
 
-# Loose detector/PID cut switch passed to rgcskim.
+# Detector/PID cut switch passed to rgcskim.
 DET_PID_CUT=0
+
+# Kinematic cut switch passed to rgcskim.
+KIN_CUT=0
 
 # Inclusive region selector. Used only for --mode inclusive.
 REGION="all"
@@ -309,6 +314,15 @@ while [ $# -gt 0 ]; do
             shift 2
             ;;
 
+        --kincut)
+            if [ $# -lt 2 ]; then
+                echo "Error: --kincut requires 0 or 1."
+                exit 1
+            fi
+            KIN_CUT="$2"
+            shift 2
+            ;;
+
         --targetmap)
             if [ $# -lt 2 ]; then
                 echo "Error: --targetmap requires a CSV file path."
@@ -478,6 +492,11 @@ fi
 
 if [ "$DET_PID_CUT" != "0" ] && [ "$DET_PID_CUT" != "1" ]; then
     echo "Error: --detpidcut must be 0 or 1."
+    exit 1
+fi
+
+if [ "$KIN_CUT" != "0" ] && [ "$KIN_CUT" != "1" ]; then
+    echo "Error: --kincut must be 0 or 1."
     exit 1
 fi
 
@@ -940,7 +959,7 @@ fi
 # Output folders
 # ------------------------------------------------------------
 
-OPTION_TAG="eT${ELECTRON_TREE}pid${DET_PID_CUT}${TARGET_FILTER_TAG}"
+OPTION_TAG="eT${ELECTRON_TREE}pid${DET_PID_CUT}kin${KIN_CUT}${TARGET_FILTER_TAG}"
 SUBDIR_TAG="skim_${DATASET_TAG}_${CHANNEL_TAG}_${OPTION_TAG}"
 
 # Output folder can optionally include period and jobtag subfolders.
@@ -986,6 +1005,7 @@ echo "Resolved HIPO dir: $HIPO_DIR"
 echo "Input HIPO files:  $NFILES"
 echo "Electron tree:     $ELECTRON_TREE"
 echo "Detector/PID cut:  $DET_PID_CUT"
+echo "Kinematic cut:     $KIN_CUT"
 echo "Output format:     $OUTPUT_FORMAT"
 echo "Target map:        ${TARGET_MAP:-none}"
 echo "Polarization src:  $POL_SOURCE"
@@ -1189,6 +1209,7 @@ do
         "$EXE" --mode sidis --pid "$HADRON_PID" "$HIPO_FILE" \
             --electrontree "$ELECTRON_TREE" \
             --detpidcut "$DET_PID_CUT" \
+            --kincut "$KIN_CUT" \
             --outformat "$OUTPUT_FORMAT" \
             "${TARGET_ARGS[@]}" \
             > "$LOGFILE" 2>&1
@@ -1197,6 +1218,7 @@ do
 
         "$EXE" --mode dihadron "$HIPO_FILE" \
             --detpidcut "$DET_PID_CUT" \
+            --kincut "$KIN_CUT" \
             --outformat "$OUTPUT_FORMAT" \
             "${TARGET_ARGS[@]}" \
             > "$LOGFILE" 2>&1
@@ -1206,6 +1228,7 @@ do
         "$EXE" --mode inclusive "$HIPO_FILE" \
             --region "$REGION" \
             --detpidcut "$DET_PID_CUT" \
+            --kincut "$KIN_CUT" \
             --outformat "$OUTPUT_FORMAT" \
             "${TARGET_ARGS[@]}" \
             > "$LOGFILE" 2>&1

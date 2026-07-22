@@ -36,7 +36,7 @@ input:
   #   Use auto for full production paths.
   #   Use none for local test folders unless you specifically want a period subfolder.
   # Example with period: auto and Summer22 input:
-  #   rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1tf1/summer22/
+  #   rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1kin1tf1/summer22/
   period: auto
 
 
@@ -77,12 +77,20 @@ cuts:
   # For inclusive mode, keep 0.
   electrontree: 0
 
-  # Loose detector/PID cuts.
+  # Detector/PID cuts.
   # Allowed:
   #   0 -> no extra detector/PID cuts
-  #   1 -> apply loose detector/PID cuts
+  #   1 -> apply detector/PID cuts
   # Recommended for normal skims: 1
   detpidcut: 1
+
+  # Dedicated region kinematic cuts.
+  # Allowed:
+  #   0 -> use only the basic region selection
+  #   1 -> apply dedicated region kinematic cuts
+  # Recommended for broad skims: 0
+  # Recommended for dedicated DIS or QE skims: 1
+  kincut: 1
 
 
 target:

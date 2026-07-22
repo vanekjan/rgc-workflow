@@ -189,6 +189,7 @@ skim:
 cuts:
   electrontree: 0
   detpidcut: 1
+  kincut: 1
 
 target:
   map: configs/target_maps/polarization_vs_run_results_preliminary_v1__1_(polarization_vs_run_results_pre).csv
@@ -322,12 +323,14 @@ e pi+ pi-
 cuts:
   electrontree: 0
   detpidcut: 1
+  kincut: 1
 ```
 
 | Field | Meaning |
 |---|---|
 | `electrontree` | Writes an extra diagnostic electron tree in SIDIS mode |
-| `detpidcut` | Applies detector and PID quality cuts. For inclusive `dis`, this applies the dedicated inclusive DIS cut set |
+| `detpidcut` | Applies detector and PID quality cuts |
+| `kincut` | Applies dedicated region kinematic cuts |
 
 Allowed values:
 
@@ -336,16 +339,30 @@ Allowed values:
 1 = on
 ```
 
-For normal analysis skims, use:
+For normal analysis skims with detector quality cuts, use:
 
 ```yaml
 detpidcut: 1
 ```
 
-For inclusive and dihadron modes, `electrontree` is forced to `0`.
-For inclusive DIS skims, `detpidcut: 1` applies a dedicated inclusive DIS electron cut set. For inclusive `all`, `res`, and `qe`, the skim keeps the looser electron detector and PID cuts described below.
+For dedicated inclusive DIS or QE skims, use:
 
----
+```yaml
+detpidcut: 1
+kincut: 1
+```
+
+For broad inclusive QE studies, use:
+
+```yaml
+detpidcut: 1
+kincut: 0
+```
+
+For inclusive and dihadron modes, `electrontree` is forced to `0`.
+
+The two cut switches are independent. `detpidcut` controls detector, PID, and fiducial quality cuts. `kincut` controls dedicated region kinematic cuts. The basic inclusive region selection is still controlled by `skim.region`.
+
 
 ## Event Selection and Cut Summary
 
@@ -360,9 +377,53 @@ This section summarizes the main event selection logic used by the skim. The exa
 | SIDIS and dihadron electron status | `status / 1000 == -2` | SIDIS and dihadron modes |
 | Electron choice | Row 0 for inclusive mode, highest momentum accepted electron for SIDIS and dihadron modes | Mode dependent |
 
-### Loose electron detector and PID cuts for non DIS inclusive regions
+### Cut switch meaning
 
-These cuts are applied only when `detpidcut: 1` is used for inclusive `all`, `res`, `qe`, SIDIS, or dihadron skims:
+The skim uses two independent cut switches:
+
+| Switch | Meaning |
+|---|---|
+| `detpidcut: 0` | Do not apply additional detector, PID, or fiducial quality cuts |
+| `detpidcut: 1` | Apply detector, PID, and fiducial quality cuts for the selected mode and region |
+| `kincut: 0` | Do not apply dedicated region kinematic cuts beyond the basic inclusive region filter |
+| `kincut: 1` | Apply dedicated region kinematic cuts for the selected inclusive region |
+
+The basic inclusive region filter is always controlled by:
+
+```yaml
+skim:
+  mode: inclusive
+  region: all
+```
+
+or:
+
+```yaml
+skim:
+  mode: inclusive
+  region: dis
+```
+
+or:
+
+```yaml
+skim:
+  mode: inclusive
+  region: qe
+```
+
+For production quality dedicated inclusive DIS or QE skims, the recommended choice is:
+
+```yaml
+cuts:
+  electrontree: 0
+  detpidcut: 1
+  kincut: 1
+```
+
+### Loose electron detector and PID cuts
+
+These loose cuts are used when `detpidcut: 1` is selected for inclusive `all`, inclusive `res`, SIDIS, or dihadron skims. They are also the generic electron detector quality reference for broad studies.
 
 ```yaml
 detpidcut: 1
@@ -379,9 +440,9 @@ detpidcut: 1
 | Sampling fraction | `sampling_fraction > 0.10` |
 | PCAL local coordinates | `lu > 0.0`, `lv > 0.0`, `lw > 0.0` |
 
-### Inclusive DIS cut set
+### Inclusive DIS detector cut set
 
-For inclusive `dis` skims, the following dedicated DIS electron cuts are applied when:
+For inclusive `dis` skims, the following dedicated DIS detector and fiducial cuts are applied when:
 
 ```yaml
 skim:
@@ -394,14 +455,11 @@ cuts:
 
 | Cut category | Requirement |
 |---|---|
-| DIS invariant mass | `W > 2.0` |
-| Four momentum transfer | `Q2 > 1.0` |
-| Electron momentum | `pe > 2.6` |
-| Electron angle | `5.0 < thetae < 40.0` degrees |
-| Electron vertex | `-5.758 <= vze <= 1.515` |
 | HTCC match | `has_htcc == 1` |
 | HTCC photoelectrons | `htcc_nphe >= 2.0` |
 | Calorimeter match | `has_cal == 1` |
+| Total calorimeter energy | `cal_e > 0.0` |
+| Calorimeter sector | `1 <= sector <= 6` |
 | PCAL energy | `pcal_e > 0.06` |
 | Sampling fraction | Sector dependent lower and upper sampling fraction window |
 | PCAL fiducial cut | Sector dependent `lv` and `lw` cuts |
@@ -438,7 +496,101 @@ The DC fiducial cut uses `REC::Traj` edge information:
 | Region 2 | `layer == 18` | `edge > 5.0` |
 | Region 3 | `layer == 36` | `edge > 8.0` |
 
-The inclusive DIS cut set is applied only to `region: dis` when `detpidcut: 1` is selected. It is not applied to inclusive `all`, `res`, `qe`, SIDIS, or dihadron skims.
+### Inclusive DIS kinematic cut set
+
+For inclusive `dis` skims, the following dedicated DIS kinematic cuts are applied when:
+
+```yaml
+skim:
+  mode: inclusive
+  region: dis
+
+cuts:
+  kincut: 1
+```
+
+| Cut category | Requirement |
+|---|---|
+| DIS invariant mass | `W > 2.0` |
+| Four momentum transfer | `Q2 > 1.0` |
+| Electron momentum | `pe > 2.6` |
+| Electron angle | `5.0 < thetae < 40.0` degrees |
+| Electron vertex | `-5.758 <= vze <= 1.515` |
+
+### Inclusive QE detector cut set
+
+For inclusive `qe` skims, the following dedicated QE detector and PID cuts are applied when:
+
+```yaml
+skim:
+  mode: inclusive
+  region: qe
+
+cuts:
+  detpidcut: 1
+```
+
+| Cut category | Requirement |
+|---|---|
+| Calorimeter match | `has_cal == 1` |
+| Electron PID quality | `abs(chi2pid) < 3.0` |
+| PCAL fiducial cut | `lv > 14.0` and `lw > 14.0` |
+| Electron momentum for ratios | `pe > 0.0` |
+| PCAL energy | `pcal_e > 0.07` GeV |
+| QE sampling fraction | `(pcal_e + ecin_e) / pe < 0.28` |
+| ECIN versus PCAL | `ecin_e / pe >= -0.625 * (pcal_e / pe) + 0.15` |
+
+The QE sampling fraction used here is:
+
+```text
+SF_QE = (E_PCAL + E_ECIN) / pe
+```
+
+This is different from the generic sampling fraction stored in the ROOT tree, which is:
+
+```text
+sampling_fraction = E_total_cal / pe
+```
+
+### Inclusive QE kinematic cut set
+
+For inclusive `qe` skims, the following dedicated QE kinematic cuts are applied when:
+
+```yaml
+skim:
+  mode: inclusive
+  region: qe
+
+cuts:
+  kincut: 1
+```
+
+| Cut category | Requirement |
+|---|---|
+| Electron angle | `7.80 < thetae < 8.20` degrees |
+| Electron vertex | `-5.758 < vze < 1.5165` cm |
+| Electron momentum | `pe > 2.0` GeV |
+| Four momentum transfer | `1.9433 < Q2 < 2.0574` GeV^2 |
+| Invariant mass | `0.0 < W < 1.073` GeV |
+
+### Inclusive cut behavior by region
+
+| Region | `detpidcut` | `kincut` | Behavior |
+|---|---|---|---|
+| `all` | `0` | `0` | Keep accepted inclusive electrons |
+| `all` | `1` | `0` | Apply loose electron detector and PID cuts |
+| `all` | `0` or `1` | `1` | No dedicated `all` kinematic cut is applied |
+| `dis` | `0` | `0` | Basic DIS region only |
+| `dis` | `1` | `0` | Basic DIS region plus dedicated DIS detector cuts |
+| `dis` | `0` | `1` | Basic DIS region plus dedicated DIS kinematic cuts |
+| `dis` | `1` | `1` | Full dedicated DIS selection |
+| `res` | `0` | `0` | Basic resonance region only |
+| `res` | `1` | `0` | Basic resonance region plus loose electron detector and PID cuts |
+| `res` | `0` or `1` | `1` | No dedicated `res` kinematic cut is applied |
+| `qe` | `0` | `0` | Broad QE region only |
+| `qe` | `1` | `0` | Broad QE region plus dedicated QE detector cuts |
+| `qe` | `0` | `1` | Broad QE region plus dedicated QE kinematic cuts |
+| `qe` | `1` | `1` | Full dedicated QE selection |
 
 ### Inclusive region selection
 
@@ -459,11 +611,11 @@ Allowed inclusive regions:
 | Region | Requirement |
 |---|---|
 | `all` | Keep all accepted inclusive electron events |
-| `dis` | `W > 2.0`; if `detpidcut: 1`, the dedicated inclusive DIS cut set is also applied |
+| `dis` | `W > 2.0` |
 | `res` | `0.0 < W < 2.0` |
 | `qe` | Broad quasi elastic skim flag with `Q2 > 0.2`, `0.5 < xB < 2.1`, and `0.0 < y < 1.0` |
 
-The `qe` region is intentionally broad at the skim level. Final physics cuts should be applied later in the analysis stage.
+The `qe` region is intentionally broad when `kincut: 0` is used. Dedicated QE kinematic cuts are applied only when `kincut: 1` is selected.
 
 ### SIDIS selection
 
@@ -476,7 +628,7 @@ SIDIS mode requires at least one accepted electron and at least one selected had
 | Event topology | At least one accepted electron and at least one selected hadron |
 | Output rows | One row is written for each selected hadron paired with the best electron |
 
-When `detpidcut: 1` is used, the hadron must also pass the loose sanity cuts below.
+When `detpidcut: 1` is used, the electron must pass the loose electron detector and PID cuts, and the hadron must also pass the loose sanity cuts below.
 
 | Hadron cut category | Requirement |
 |---|---|
@@ -499,6 +651,8 @@ Dihadron mode currently selects the `e pi+ pi-` channel.
 
 When `detpidcut: 1` is used, the electron and pions must also pass the loose detector and PID sanity checks.
 
+No dihadron kinematic cuts such as `Q2`, `W`, `x`, `z`, `Mh`, `PhT`, or missing mass are applied in the skim.
+
 ### Target and scaler handling
 
 | Item | Behavior |
@@ -508,8 +662,6 @@ When `detpidcut: 1` is used, the electron and pions must also pass the loose det
 | Scaler tree | `HEL::scaler` information is stored for FCup and helicity normalization |
 | HIPO output | HIPO output preserves selected physics events and scaler events |
 
-
----
 
 ## Target Map Section
 
@@ -687,20 +839,20 @@ Output folders are built from:
 dataset + channel + option tag + period + job tag
 ```
 
-Example inclusive QE output with target matching:
+Example inclusive QE output with target matching and dedicated kinematic cuts:
 
 ```text
-rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1tf1/summer22/test_one_run/
-hipofiles/skim_sidisdvcs_inclusive_qe_eT0pid1tf1/summer22/test_one_run/
-logs/skim_sidisdvcs_inclusive_qe_eT0pid1tf1/summer22/test_one_run/
+rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1kin1tf1/summer22/test_one_run/
+hipofiles/skim_sidisdvcs_inclusive_qe_eT0pid1kin1tf1/summer22/test_one_run/
+logs/skim_sidisdvcs_inclusive_qe_eT0pid1kin1tf1/summer22/test_one_run/
 ```
 
 Example output filename:
 
 ```text
-sidisdvcs_inclusive_qe_eT0pid1tf1_016270.root
-sidisdvcs_inclusive_qe_eT0pid1tf1_016270.hipo
-sidisdvcs_inclusive_qe_eT0pid1tf1_016270.log
+sidisdvcs_inclusive_qe_eT0pid1kin1tf1_016270.root
+sidisdvcs_inclusive_qe_eT0pid1kin1tf1_016270.hipo
+sidisdvcs_inclusive_qe_eT0pid1kin1tf1_016270.log
 ```
 
 ### Option tag
@@ -708,13 +860,13 @@ sidisdvcs_inclusive_qe_eT0pid1tf1_016270.log
 The option tag has the form:
 
 ```text
-eT<electrontree>pid<detpidcut>tf<targetfilter>
+eT<electrontree>pid<detpidcut>kin<kincut>tf<targetfilter>
 ```
 
 Example:
 
 ```text
-eT0pid1tf1
+eT0pid1kin1tf1
 ```
 
 means:
@@ -722,6 +874,7 @@ means:
 ```text
 electrontree = 0
 detpidcut    = 1
+kincut       = 1
 targetfilter = matched
 ```
 

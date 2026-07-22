@@ -75,38 +75,38 @@ const double M_p = 0.938272088;      // proton mass in GeV
 const double M_pion = 0.13957039;    // charged pion mass in GeV
 const double M_electron = 0.000510999; // electron mass in GeV
 
-// FCup-style inclusive DIS electron cuts.
+// Dedicated inclusive DIS electron cuts.
 // These are used only for:
 //   --mode inclusive --region dis --detpidcut 1
-// They are kept separate from the loose generic detector/PID cuts
-// so SIDIS, dihadron, and broad QE studies are not unintentionally tightened.
+// Detector cuts are selected with detpidcut.
+// Kinematic cuts are selected with kincut.
 
-const double FCUP_DIS_Q2_MIN = 1.0;
-const double FCUP_DIS_W_MIN = 2.0;
-const double FCUP_DIS_EP_MIN = 2.6;
+const double DEDICATED_DIS_Q2_MIN = 1.0;
+const double DEDICATED_DIS_W_MIN = 2.0;
+const double DEDICATED_DIS_EP_MIN = 2.6;
 
-const double FCUP_DIS_THETA_MIN_DEG = 5.0;
-const double FCUP_DIS_THETA_MAX_DEG = 40.0;
+const double DEDICATED_DIS_THETA_MIN_DEG = 5.0;
+const double DEDICATED_DIS_THETA_MAX_DEG = 40.0;
 
-const double FCUP_DIS_VZ_MIN = -5.758;
-const double FCUP_DIS_VZ_MAX = 1.515;
+const double DEDICATED_DIS_VZ_MIN = -5.758;
+const double DEDICATED_DIS_VZ_MAX = 1.515;
 
-const double FCUP_DIS_NPHE_MIN = 2.0;
-const double FCUP_DIS_PCAL_E_MIN = 0.06;
+const double DEDICATED_DIS_NPHE_MIN = 2.0;
+const double DEDICATED_DIS_PCAL_E_MIN = 0.06;
 
-const double FCUP_DIS_PCAL_LVW_S1 = 22.5;
-const double FCUP_DIS_PCAL_LVW_S26 = 13.5;
+const double DEDICATED_DIS_PCAL_LVW_S1 = 22.5;
+const double DEDICATED_DIS_PCAL_LVW_S26 = 13.5;
 
-const int FCUP_DIS_DC_DETECTOR = 6;
-const int FCUP_DIS_DC_LAYER_R1 = 6;
-const int FCUP_DIS_DC_LAYER_R2 = 18;
-const int FCUP_DIS_DC_LAYER_R3 = 36;
+const int DEDICATED_DIS_DC_DETECTOR = 6;
+const int DEDICATED_DIS_DC_LAYER_R1 = 6;
+const int DEDICATED_DIS_DC_LAYER_R2 = 18;
+const int DEDICATED_DIS_DC_LAYER_R3 = 36;
 
-const double FCUP_DIS_DC_EDGE_R1 = 4.0;
-const double FCUP_DIS_DC_EDGE_R2 = 5.0;
-const double FCUP_DIS_DC_EDGE_R3 = 8.0;
+const double DEDICATED_DIS_DC_EDGE_R1 = 4.0;
+const double DEDICATED_DIS_DC_EDGE_R2 = 5.0;
+const double DEDICATED_DIS_DC_EDGE_R3 = 8.0;
 
-const double FCUP_DIS_SF_LOW[6][3] = {
+const double DEDICATED_DIS_SF_LOW[6][3] = {
     {0.188243, +0.004928, -0.000498},
     {0.183701, +0.008171, -0.000765},
     {0.185788, +0.007974, -0.000773},
@@ -115,7 +115,7 @@ const double FCUP_DIS_SF_LOW[6][3] = {
     {0.187191, +0.005478, -0.000496}
 };
 
-const double FCUP_DIS_SF_HIGH[6][3] = {
+const double DEDICATED_DIS_SF_HIGH[6][3] = {
     {0.308340, -0.007150, +0.000487},
     {0.310391, -0.003058, -0.000184},
     {0.310277, -0.004496, -0.000111},
@@ -123,6 +123,35 @@ const double FCUP_DIS_SF_HIGH[6][3] = {
     {0.312211, -0.007023, +0.000140},
     {0.309825, -0.004853, -0.000123}
 };
+
+// Dedicated inclusive QE electron cuts.
+// These are used only for inclusive QE when detpidcut or kincut is selected.
+// They are kept separate from the broad QE flag.
+
+const double DEDICATED_QE_THETA_MIN_DEG = 7.80;
+const double DEDICATED_QE_THETA_MAX_DEG = 8.20;
+
+const double DEDICATED_QE_VZ_MIN = -5.758;
+const double DEDICATED_QE_VZ_MAX = 1.5165;
+
+const double DEDICATED_QE_ABS_CHI2PID_MAX = 3.0;
+
+const double DEDICATED_QE_LV_MIN = 14.0;
+const double DEDICATED_QE_LW_MIN = 14.0;
+
+const double DEDICATED_QE_SF_MAX = 0.28;
+
+const double DEDICATED_QE_ECIN_PCAL_SLOPE = -0.625;
+const double DEDICATED_QE_ECIN_PCAL_INTERCEPT = 0.15;
+
+const double DEDICATED_QE_P_MIN = 2.0;
+const double DEDICATED_QE_PCAL_E_MIN = 0.07;
+
+const double DEDICATED_QE_Q2_MIN = 1.9433;
+const double DEDICATED_QE_Q2_MAX = 2.0574;
+
+const double DEDICATED_QE_W_MIN = 0.0;
+const double DEDICATED_QE_W_MAX = 1.073;
 
 typedef unordered_map<int,vector<int>> vectorMap;
 
@@ -393,26 +422,40 @@ DCEdgeInfo getDCEdgeInfo(
     hipo::bank bankTraj
 );
 
-bool passFCupSamplingFraction(
+bool passInclusiveDISSamplingFraction(
     int sector,
     double p,
     double sampling_fraction
 );
 
-bool passFCupPCALFiducial(
+bool passInclusiveDISPCALFiducial(
     int sector,
     double lv,
     double lw
 );
 
-bool passFCupDCFiducial(
+bool passInclusiveDISDCFiducial(
     const DCEdgeInfo &dcInfo
 );
 
-bool passInclusiveDISFCupCuts(
+bool passInclusiveDISDetectorCuts(
     const ParticleCandidate &electron,
     const DetectorInfo &eDet,
-    const DCEdgeInfo &dcInfo,
+    const DCEdgeInfo &dcInfo
+);
+
+bool passInclusiveDISKinematicCuts(
+    const ParticleCandidate &electron,
+    const InclusiveKin &kin
+);
+
+bool passInclusiveQEDetectorCuts(
+    const ParticleCandidate &electron,
+    const DetectorInfo &eDet
+);
+
+bool passInclusiveQEKinematicCuts(
+    const ParticleCandidate &electron,
     const InclusiveKin &kin
 );
 
@@ -583,7 +626,8 @@ int main(int argc, char** argv) {
 
         cout << "Options:" << endl;
         cout << "  --electrontree 0 or 1    Write the extra electrons tree in SIDIS mode. Default = 0" << endl;
-        cout << "  --detpidcut    0 or 1    Apply detector/PID cuts. For inclusive DIS, this applies FCup-style DIS cuts. Default = 0" << endl;
+        cout << "  --detpidcut    0 or 1    Apply detector/PID cuts. Default = 0" << endl;
+        cout << "  --kincut       0 or 1    Apply dedicated region kinematic cuts. Default = 0" << endl;
         cout << "  --outformat    root, hipo, or both. Default = root" << endl;
         cout << endl;
 
@@ -591,7 +635,7 @@ int main(int argc, char** argv) {
         cout << "  " << argv[0] << " --mode sidis --pid 211 file.hipo --electrontree 0 --detpidcut 1" << endl;
         cout << "  " << argv[0] << " --mode sidis --pid 211 file.hipo --detpidcut 1" << endl;
         cout << "  " << argv[0] << " --mode sidis --pid 211 file.hipo --electrontree 1 --detpidcut 1" << endl;
-        cout << "  " << argv[0] << " --mode inclusive file.hipo --detpidcut 1" << endl;
+        cout << "  " << argv[0] << " --mode inclusive file.hipo --detpidcut 1 --kincut 1" << endl;
 
         exit(0);
     }else{
@@ -654,6 +698,7 @@ int main(int argc, char** argv) {
         int writeElectronTree = 0;
 
         int applyDetPidCut = 0;
+        int applyKinCut = 0;
 
         vector<string> hipoFiles;
 
@@ -714,10 +759,20 @@ int main(int argc, char** argv) {
                 applyDetPidCut = atoi(argv[iarg + 1]);
                 iarg++;
 
+            }else if(arg == "--kincut"){
+
+                if(iarg + 1 >= n_argc){
+                    cout << "Error: --kincut requires 0 or 1." << endl;
+                    exit(1);
+                }
+
+                applyKinCut = atoi(argv[iarg + 1]);
+                iarg++;
+
             }else if(arg == "--region"){
 
                 if(iarg + 1 >= n_argc){
-                    cout << "Error: --region requires all, dis, res, or resonance." << endl;
+                    cout << "Error: --region requires all, dis, res, or qe." << endl;
                     exit(1);
                 }
 
@@ -807,6 +862,11 @@ int main(int argc, char** argv) {
             exit(1);
         }
 
+        if(applyKinCut != 0 && applyKinCut != 1){
+            cout << "Error: --kincut must be 0 or 1." << endl;
+            exit(1);
+        }
+
         if(polSource != "offline" && polSource != "online"){
             cout << "Error: --polsource must be offline or online." << endl;
             exit(1);
@@ -847,17 +907,18 @@ int main(int argc, char** argv) {
 
         cout << "Options:" << endl;
         cout << "  --electrontree 0 or 1    Write the extra electrons tree in SIDIS mode. Default = 0" << endl;
-        cout << "  --detpidcut    0 or 1    Apply loose detector/PID cuts. Default = 0" << endl;
+        cout << "  --detpidcut    0 or 1    Apply detector/PID cuts. Default = 0" << endl;
+        cout << "  --kincut       0 or 1    Apply dedicated region kinematic cuts. Default = 0" << endl;
         cout << "  --region all/dis/res/qe  Inclusive mode only. Default = all" << endl;    
         cout << "  --targetmap <csv>       Optional run-level target/polarization CSV" << endl;
         cout << "  --polsource offline|online  Polarization source for target_pol. Default = offline" << endl;
         cout << "  --outformat root|hipo|both  Output format. Default = root" << endl;
         cout << endl;
 
-        cout << "  " << argv[0] << " --mode inclusive file.hipo --region all --detpidcut 1" << endl;
-        cout << "  " << argv[0] << " --mode inclusive file.hipo --region dis --detpidcut 1" << endl;
-        cout << "  " << argv[0] << " --mode inclusive file.hipo --region res --detpidcut 1" << endl;
-        cout << "  " << argv[0] << " --mode inclusive file.hipo --region qe --detpidcut 1" << endl;
+        cout << "  " << argv[0] << " --mode inclusive file.hipo --region all --detpidcut 1 --kincut 0" << endl;
+        cout << "  " << argv[0] << " --mode inclusive file.hipo --region dis --detpidcut 1 --kincut 1" << endl;
+        cout << "  " << argv[0] << " --mode inclusive file.hipo --region res --detpidcut 1 --kincut 0" << endl;
+        cout << "  " << argv[0] << " --mode inclusive file.hipo --region qe --detpidcut 1 --kincut 1" << endl;
 
         string hadronTag = "none";
 
@@ -877,6 +938,7 @@ int main(int argc, char** argv) {
 
         cout << "Option --electrontree = " << writeElectronTree << endl;
         cout << "Option --detpidcut    = " << applyDetPidCut << endl;
+        cout << "Option --kincut       = " << applyKinCut << endl;
         cout << "Option --targetmap    = " << targetMapFile << endl;
         cout << "Option --polsource    = " << polSource << endl;
         cout << "Option --outformat    = " << outputFormat << endl;
@@ -2441,26 +2503,62 @@ int main(int argc, char** argv) {
                     InclusiveKin incKin = calculateInclusiveKinematics(bestElectron);
 
                     // Optional detector/PID cuts.
-                    // For inclusive DIS, use the FCup-style DIS electron cut chain.
-                    // For all/res/qe, keep the original loose electron detector/PID cuts.
+                    // For inclusive DIS and QE, use the dedicated detector cuts.
+                    // For all and res, keep the original loose electron detector/PID cuts.
                     if(applyDetPidCut == 1){
-                        bool good_e = false;
+                        bool good_e = true;
+
                         if(inclusiveRegion == "dis"){
+
                             DCEdgeInfo bestElectronDC = getDCEdgeInfo(
                                 bestElectron.pindex,
                                 trajectory
                             );
-                            good_e = passInclusiveDISFCupCuts(
+
+                            good_e = passInclusiveDISDetectorCuts(
                                 bestElectron,
                                 bestElectronDet,
-                                bestElectronDC,
-                                incKin
+                                bestElectronDC
                             );
+
+                        }else if(inclusiveRegion == "qe"){
+
+                            good_e = passInclusiveQEDetectorCuts(
+                                bestElectron,
+                                bestElectronDet
+                            );
+
                         }else{
+
                             good_e = passElectronDetPidCuts(bestElectronDet);
                         }
 
                         if(!good_e){
+                            continue;
+                        }
+                    }
+
+                    // Optional dedicated kinematic cuts.
+                    // These are applied only for regions that have a dedicated kinematic cut set.
+                    if(applyKinCut == 1){
+                        bool good_kin = true;
+
+                        if(inclusiveRegion == "dis"){
+
+                            good_kin = passInclusiveDISKinematicCuts(
+                                bestElectron,
+                                incKin
+                            );
+
+                        }else if(inclusiveRegion == "qe"){
+
+                            good_kin = passInclusiveQEKinematicCuts(
+                                bestElectron,
+                                incKin
+                            );
+                        }
+
+                        if(!good_kin){
                             continue;
                         }
                     }
@@ -3921,7 +4019,7 @@ DetectorInfo getDetectorInfo(
 }
 
 // Read DC fiducial edge information from REC::Traj for one REC::Particle row.
-// This reproduces the DC edge quantities used in the FCup inclusive DIS code.
+// This reads the DC edge quantities used in the dedicated inclusive DIS cut.
 
 DCEdgeInfo getDCEdgeInfo(
     int pindex,
@@ -3932,22 +4030,22 @@ DCEdgeInfo getDCEdgeInfo(
     for(int irow = 0; irow < bankTraj.getRows(); irow++){
 
         if(bankTraj.getInt("pindex", irow) != pindex) continue;
-        if(bankTraj.getInt("detector", irow) != FCUP_DIS_DC_DETECTOR) continue;
+        if(bankTraj.getInt("detector", irow) != DEDICATED_DIS_DC_DETECTOR) continue;
 
         int layer = bankTraj.getInt("layer", irow);
         float edge = bankTraj.getFloat("edge", irow);
 
-        if(layer == FCUP_DIS_DC_LAYER_R1){
+        if(layer == DEDICATED_DIS_DC_LAYER_R1){
             info.edge_r1 = edge;
             info.has_r1 = 1;
         }
 
-        if(layer == FCUP_DIS_DC_LAYER_R2){
+        if(layer == DEDICATED_DIS_DC_LAYER_R2){
             info.edge_r2 = edge;
             info.has_r2 = 1;
         }
 
-        if(layer == FCUP_DIS_DC_LAYER_R3){
+        if(layer == DEDICATED_DIS_DC_LAYER_R3){
             info.edge_r3 = edge;
             info.has_r3 = 1;
         }
@@ -3956,9 +4054,9 @@ DCEdgeInfo getDCEdgeInfo(
     return info;
 }
 
-// Sector dependent sampling fraction cut used by the FCup DIS code.
+// Sector dependent sampling fraction cut used by the dedicated inclusive DIS cut.
 
-bool passFCupSamplingFraction(
+bool passInclusiveDISSamplingFraction(
     int sector,
     double p,
     double sampling_fraction
@@ -3969,14 +4067,14 @@ bool passFCupSamplingFraction(
     int idx = sector - 1;
 
     double sf_low =
-        FCUP_DIS_SF_LOW[idx][0] +
-        FCUP_DIS_SF_LOW[idx][1] * p +
-        FCUP_DIS_SF_LOW[idx][2] * p * p;
+        DEDICATED_DIS_SF_LOW[idx][0] +
+        DEDICATED_DIS_SF_LOW[idx][1] * p +
+        DEDICATED_DIS_SF_LOW[idx][2] * p * p;
 
     double sf_high =
-        FCUP_DIS_SF_HIGH[idx][0] +
-        FCUP_DIS_SF_HIGH[idx][1] * p +
-        FCUP_DIS_SF_HIGH[idx][2] * p * p;
+        DEDICATED_DIS_SF_HIGH[idx][0] +
+        DEDICATED_DIS_SF_HIGH[idx][1] * p +
+        DEDICATED_DIS_SF_HIGH[idx][2] * p * p;
 
     if(sampling_fraction <= sf_low) return false;
     if(sampling_fraction >= sf_high) return false;
@@ -3984,20 +4082,20 @@ bool passFCupSamplingFraction(
     return true;
 }
 
-// PCAL fiducial cut used by the FCup DIS code.
+// PCAL fiducial cut used by the dedicated inclusive DIS cut.
 // Sector 1 uses a tighter lv/lw minimum than sectors 2 through 6.
 
-bool passFCupPCALFiducial(
+bool passInclusiveDISPCALFiducial(
     int sector,
     double lv,
     double lw
 ){
     if(sector < 1 || sector > 6) return false;
 
-    double min_lvw = FCUP_DIS_PCAL_LVW_S26;
+    double min_lvw = DEDICATED_DIS_PCAL_LVW_S26;
 
     if(sector == 1){
-        min_lvw = FCUP_DIS_PCAL_LVW_S1;
+        min_lvw = DEDICATED_DIS_PCAL_LVW_S1;
     }
 
     if(lv <= min_lvw) return false;
@@ -4006,61 +4104,40 @@ bool passFCupPCALFiducial(
     return true;
 }
 
-// DC fiducial edge cut used by the FCup DIS code.
+// DC fiducial edge cut used by the dedicated inclusive DIS cut.
 
-bool passFCupDCFiducial(
+bool passInclusiveDISDCFiducial(
     const DCEdgeInfo &dcInfo
 ){
     if(dcInfo.has_r1 != 1) return false;
     if(dcInfo.has_r2 != 1) return false;
     if(dcInfo.has_r3 != 1) return false;
 
-    if(dcInfo.edge_r1 <= FCUP_DIS_DC_EDGE_R1) return false;
-    if(dcInfo.edge_r2 <= FCUP_DIS_DC_EDGE_R2) return false;
-    if(dcInfo.edge_r3 <= FCUP_DIS_DC_EDGE_R3) return false;
+    if(dcInfo.edge_r1 <= DEDICATED_DIS_DC_EDGE_R1) return false;
+    if(dcInfo.edge_r2 <= DEDICATED_DIS_DC_EDGE_R2) return false;
+    if(dcInfo.edge_r3 <= DEDICATED_DIS_DC_EDGE_R3) return false;
 
     return true;
 }
 
-// Full FCup-style inclusive DIS electron cut.
-// This should be used only for:
-//   --mode inclusive --region dis --detpidcut 1
-// It intentionally includes kinematic DIS cuts and detector/fiducial cuts.
-// Do not use this for broad QE skims unless you intentionally want DIS-style electron cuts.
+// Dedicated inclusive DIS detector cut.
+// This should be used only for inclusive DIS when detpidcut is selected.
 
-bool passInclusiveDISFCupCuts(
+bool passInclusiveDISDetectorCuts(
     const ParticleCandidate &electron,
     const DetectorInfo &eDet,
-    const DCEdgeInfo &dcInfo,
-    const InclusiveKin &kin
+    const DCEdgeInfo &dcInfo
 ){
-    double theta_deg = electron.theta * 180.0 / TMath::Pi();
-
-    // DIS kinematic cuts.
-    if(kin.W <= FCUP_DIS_W_MIN) return false;
-    if(kin.Q2 <= FCUP_DIS_Q2_MIN) return false;
-    if(electron.p <= FCUP_DIS_EP_MIN) return false;
-
-    // Electron angular and vertex cuts.
-    if(theta_deg <= FCUP_DIS_THETA_MIN_DEG) return false;
-    if(theta_deg >= FCUP_DIS_THETA_MAX_DEG) return false;
-
-    if(electron.vz < FCUP_DIS_VZ_MIN) return false;
-    if(electron.vz > FCUP_DIS_VZ_MAX) return false;
-
-    // HTCC cut.
-    // FCup code uses nphe >= 2.
     if(eDet.has_htcc != 1) return false;
-    if(eDet.htcc_nphe < FCUP_DIS_NPHE_MIN) return false;
+    if(eDet.htcc_nphe < DEDICATED_DIS_NPHE_MIN) return false;
 
-    // Calorimeter and PCAL cuts.
     if(eDet.has_cal != 1) return false;
     if(eDet.cal_e <= 0.0) return false;
     if(eDet.cal_sector < 1 || eDet.cal_sector > 6) return false;
 
-    if(eDet.pcal_e <= FCUP_DIS_PCAL_E_MIN) return false;
+    if(eDet.pcal_e <= DEDICATED_DIS_PCAL_E_MIN) return false;
 
-    if(!passFCupSamplingFraction(
+    if(!passInclusiveDISSamplingFraction(
         eDet.cal_sector,
         electron.p,
         eDet.sampling_fraction
@@ -4068,7 +4145,7 @@ bool passInclusiveDISFCupCuts(
         return false;
     }
 
-    if(!passFCupPCALFiducial(
+    if(!passInclusiveDISPCALFiducial(
         eDet.cal_sector,
         eDet.lv,
         eDet.lw
@@ -4076,9 +4153,91 @@ bool passInclusiveDISFCupCuts(
         return false;
     }
 
-    if(!passFCupDCFiducial(dcInfo)){
+    if(!passInclusiveDISDCFiducial(dcInfo)){
         return false;
     }
+
+    return true;
+}
+
+// Dedicated inclusive DIS kinematic cut.
+// This should be used only for inclusive DIS when kincut is selected.
+
+bool passInclusiveDISKinematicCuts(
+    const ParticleCandidate &electron,
+    const InclusiveKin &kin
+){
+    double theta_deg = electron.theta * 180.0 / TMath::Pi();
+
+    if(kin.W <= DEDICATED_DIS_W_MIN) return false;
+    if(kin.Q2 <= DEDICATED_DIS_Q2_MIN) return false;
+    if(electron.p <= DEDICATED_DIS_EP_MIN) return false;
+
+    if(theta_deg <= DEDICATED_DIS_THETA_MIN_DEG) return false;
+    if(theta_deg >= DEDICATED_DIS_THETA_MAX_DEG) return false;
+
+    if(electron.vz < DEDICATED_DIS_VZ_MIN) return false;
+    if(electron.vz > DEDICATED_DIS_VZ_MAX) return false;
+
+    return true;
+}
+
+// Dedicated inclusive QE detector cut.
+// This should be used only for inclusive QE when detpidcut is selected.
+
+bool passInclusiveQEDetectorCuts(
+    const ParticleCandidate &electron,
+    const DetectorInfo &eDet
+){
+    if(electron.p <= 0.0) return false;
+
+    if(fabs(eDet.chi2pid) >= DEDICATED_QE_ABS_CHI2PID_MAX) return false;
+
+    if(eDet.has_cal != 1) return false;
+
+    if(eDet.lv <= DEDICATED_QE_LV_MIN) return false;
+    if(eDet.lw <= DEDICATED_QE_LW_MIN) return false;
+
+    if(eDet.pcal_e <= DEDICATED_QE_PCAL_E_MIN) return false;
+
+    double sf_qe = (eDet.pcal_e + eDet.ecin_e) / electron.p;
+
+    if(sf_qe >= DEDICATED_QE_SF_MAX) return false;
+
+    double pcal_over_p = eDet.pcal_e / electron.p;
+    double ecin_over_p = eDet.ecin_e / electron.p;
+
+    double ecin_min =
+        DEDICATED_QE_ECIN_PCAL_SLOPE * pcal_over_p +
+        DEDICATED_QE_ECIN_PCAL_INTERCEPT;
+
+    if(ecin_over_p < ecin_min) return false;
+
+    return true;
+}
+
+// Dedicated inclusive QE kinematic cut.
+// This should be used only for inclusive QE when kincut is selected.
+
+bool passInclusiveQEKinematicCuts(
+    const ParticleCandidate &electron,
+    const InclusiveKin &kin
+){
+    double theta_deg = electron.theta * 180.0 / TMath::Pi();
+
+    if(theta_deg <= DEDICATED_QE_THETA_MIN_DEG) return false;
+    if(theta_deg >= DEDICATED_QE_THETA_MAX_DEG) return false;
+
+    if(electron.vz <= DEDICATED_QE_VZ_MIN) return false;
+    if(electron.vz >= DEDICATED_QE_VZ_MAX) return false;
+
+    if(electron.p <= DEDICATED_QE_P_MIN) return false;
+
+    if(kin.Q2 <= DEDICATED_QE_Q2_MIN) return false;
+    if(kin.Q2 >= DEDICATED_QE_Q2_MAX) return false;
+
+    if(kin.W <= DEDICATED_QE_W_MIN) return false;
+    if(kin.W >= DEDICATED_QE_W_MAX) return false;
 
     return true;
 }
