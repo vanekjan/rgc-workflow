@@ -3849,13 +3849,44 @@ void applyTargetInfoToEventInfo(
     evInfo.target_pol = selectedPol;
     evInfo.target_pol_err = selectedPolErr;
 
-    // For now, treat the selected NMR polarization as vector polarization.
-    // Do not infer tensor polarization here.
+    // Treat the selected NMR polarization as vector polarization.
+    // For deuteron target, calculate tensor polarization from vector polarization.
     evInfo.vector_pol = selectedPol;
     evInfo.vector_pol_err = selectedPolErr;
 
     evInfo.tensor_pol = -9999;
     evInfo.tensor_pol_err = -9999;
+
+    if(evInfo.target_species_id == 2 && selectedPol > -999.0){
+
+        double vectorPolForCalc = selectedPol;
+        double tensorPolScale = 1.0;
+
+        // The formula expects vector polarization as a fraction.
+        // If the map value is stored in percent, convert for the calculation.
+        // The stored tensor polarization is then converted back to the same unit.
+        if(fabs(vectorPolForCalc) > 1.0){
+            vectorPolForCalc = vectorPolForCalc / 100.0;
+            tensorPolScale = 100.0;
+        }
+
+        double tensorArg = 4.0 - 3.0 * vectorPolForCalc * vectorPolForCalc;
+
+        if(tensorArg >= 0.0){
+
+            evInfo.tensor_pol = tensorPolScale * (
+                2.0 - sqrt(tensorArg)
+            );
+
+            if(selectedPolErr > 0.0 && tensorArg > 0.0){
+
+                double dTensorDVector =
+                    3.0 * vectorPolForCalc / sqrt(tensorArg);
+
+                evInfo.tensor_pol_err = fabs(dTensorDVector) * selectedPolErr;
+            }
+        }
+    }
 
     if(selectedPol > 0.0){
         evInfo.target_state = 1;
