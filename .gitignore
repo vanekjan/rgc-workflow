@@ -1,17 +1,26 @@
 # Build outputs
 build/
+skim/build/
 rgcskim
+skim/rgcskim
 *.o
 
 # Skim outputs
 rootfiles/
+skim/rootfiles/
 hipofiles/
+skim/hipofiles/
 logs/
+skim/logs/
 *.root
 *.hipo
 
-# Local working config
+# Generic Slurm generated output
+generic_slurm_output/
+
+# Local working skim config
 configs/skim.yaml
+skim/configs/skim.yaml
 
 # Temporary and editor files
 *~
@@ -26,10 +35,14 @@ __pycache__/
 
 # Large or private target maps
 configs/target_maps/*.csv
+skim/configs/target_maps/*.csv
 
 # Keep the shared baseline target map
 !configs/target_maps/polarization_vs_run_results_preliminary_v1__1_(polarization_vs_run_results_pre).csv
+!skim/configs/target_maps/polarization_vs_run_results_preliminary_v1__1_(polarization_vs_run_results_pre).csv
 
-# Keep README files in ignored folders
+# Keep README files in config folders
 !configs/target_maps/README.md
 !configs/runlists/README.md
+!skim/configs/target_maps/README.md
+!skim/configs/runlists/README.md
