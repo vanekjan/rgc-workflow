@@ -1,0 +1,28 @@
+# Build products
+qe_analysis
+qe_pair_scan
+*.o
+*.d
+*.so
+*.pcm
+
+# Analysis outputs
+outputs/
+outputs_old/
+archived_outputs*/
+qadb_cache/
+
+# ROOT / plots / logs
+*.root
+*.png
+*.pdf
+*.log
+
+# Temporary workflow outputs
+*.out
+*.err
+
+# Temporary editor/system files
+*~
+.#*
+.DS_Store

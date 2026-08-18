@@ -1,0 +1,1 @@
+./run_pair_scan.sh --build --config configs/pair_scan_kin1.yaml

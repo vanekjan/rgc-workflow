@@ -1,0 +1,7 @@
+python3 tools/qadb/compare_pair_scan_cut_profiles.py \
+  --kin0-csv outputs/pair_scan/kin0/qe_pair_scan_spring23_kin0_pair_summary_qadb.csv \
+  --kin1-csv outputs/pair_scan/kin1/qe_pair_scan_spring23_kin1_pair_summary_qadb.csv \
+  --outdir outputs/pair_scan/comparison \
+  --prefix spring23_kin0_vs_kin1 \
+  --pair-class pos_neg \
+  --top-n 50

@@ -1,0 +1,1 @@
+python3 tools/qadb/plot_qadb_pair_diagnostics.py --pair-csv outputs/qe_pair_scan_spring23_kin0_pair_summary_qadb.csv --outdir outputs/pair_diagnostics_kin0 --prefix kin0 --pair-class pos_neg --min-abs-deltaq 0.08 --yield-ratio-min 0.90 --yield-ratio-max 1.10 --top-n 50

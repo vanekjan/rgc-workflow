@@ -1,0 +1,72 @@
+#============================================================
+# pair_scan_kin0.yaml
+#
+# Many-run pair scan using the broad kin0 skim input.
+#
+# cut_profile: kin0 means detector/PID cuts only. The kinematic values
+# are still listed below but are not applied by qe_pair_scan.cc.
+#============================================================
+
+dataset: spring23
+input_sample: kin0_skim
+cut_profile: kin0
+
+indir: ../../../skim/rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1kin0tf1/spring23/spring23_qe_full
+contains: .root
+runs: all
+
+auto_output: 1
+output_dir_base: outputs/pair_scan
+
+run_qadb: 1
+run_plots: 1
+qadb_script: tools/qadb/qadb_pair_postprocess.py
+plot_script: tools/qadb/plot_qadb_pair_diagnostics.py
+qadb_cache_dir: qadb_cache
+
+charge_branch: fcupgated_delta
+charge_rel_err: 0.002
+require_target_match: 1
+require_is_qe: 1
+require_fd_status: 0
+min_abs_delta_q: 0.0
+min_charge: 1.0
+min_final: 1
+max_pairs: -1
+
+# Detector/PID cuts. Applied for both kin0 and kin1.
+chi2_max: 3.0
+detector_pe_min: 0.0
+lv_min: 14.0
+lw_min: 14.0
+pcal_min: 0.07
+sf_max: 0.28
+use_sf_cut: 1
+use_ecin_pcal_cut: 1
+ecin_slope: -0.625
+ecin_intercept: 0.15
+
+# Tight QE kinematic cuts. Listed, but not applied for cut_profile: kin0.
+theta_min: 7.8
+theta_max: 8.2
+vz_min: -5.758
+vz_max: 1.5165
+pe_min: 2.0
+q2_min: 1.9433
+q2_max: 2.0574
+w_min: 0.0
+w_max: 1.073
+
+# xB counting interval. Not part of the skim kincut table.
+xmin: 0.85
+xmax: 1.15
+
+# Plot/top-candidate filters.
+top_n: 50
+include_rejected: 0
+pair_class: pos_neg
+min_abs_deltaq_plot: 0.08
+max_abs_r2q_plot: 5.0
+yield_ratio_min: 0.90
+yield_ratio_max: 1.10
+

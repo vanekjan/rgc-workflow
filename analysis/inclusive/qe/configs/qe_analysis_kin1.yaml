@@ -1,0 +1,77 @@
+#============================================================
+# qe_analysis_kin1.yaml
+#
+# Single-pair QE tensor analysis using the broad kin0 skim input,
+# then applying the tight QE kinematic cut block at analysis level.
+#
+# Cut-profile convention:
+#   kin0 = inclusive QE detector/PID cuts only.
+#   kin1 = inclusive QE detector/PID cuts + tight QE kinematic cuts.
+#============================================================
+
+dataset: spring23
+input_sample: kin0_skim
+cut_profile: kin1
+
+# Change only these two run numbers for a new pair.
+# run1: 17780
+# run2: 17792
+
+# run1: 17780
+# run2: 17793
+
+run1: 17781
+run2: 17793
+
+# Auto input ROOT file resolution. We intentionally still use the kin0 skim.
+skim_dir: ../../../skim/rootfiles/skim_sidisdvcs_inclusive_qe_eT0pid1kin0tf1/spring23/spring23_qe_full
+skim_prefix: sidisdvcs_inclusive_qe_eT0pid1kin0tf1
+auto_inputs: 1
+
+# Auto output organization:
+# outputs/pairs/kin1/RUN1_RUN2/qe_Azz_approx_RUN1_RUN2_kin1.root
+auto_output: 1
+profile_subdir: 1
+pair_subdir: 1
+output_dir_base: outputs/pairs
+output_stem: qe_Azz_approx
+
+# xB counting/plotting interval. This is not part of the skim kincut table.
+xbins: 10
+xmin: 0.85
+xmax: 1.15
+
+# Detector/PID cuts. Applied for both cut_profile: kin0 and cut_profile: kin1.
+chi2_max: 3.0
+detector_pe_min: 0.0
+lv_min: 14.0
+lw_min: 14.0
+pcal_min: 0.07
+sf_max: 0.28
+use_sf_cut: 1
+use_ecin_pcal_cut: 1
+ecin_slope: -0.625
+ecin_intercept: 0.15
+
+# Tight QE kinematic cuts. Applied because cut_profile: kin1.
+theta_min: 7.8
+theta_max: 8.2
+vz_min: -5.758
+vz_max: 1.5165
+pe_min: 2.0
+q2_min: 1.9433
+q2_max: 2.0574
+w_min: 0.0
+w_max: 1.073
+
+# FCup normalization.
+charge_branch: fcupgated_delta
+charge_rel_err: 0.002
+
+# Event switches.
+require_target_match: 1
+require_is_qe: 1
+require_fd_status: 0
+save_plots: 1
+write_diagnostics: 1
+

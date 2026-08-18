@@ -1,0 +1,1 @@
+./run_qe_analysis.sh --build --config configs/qe_analysis_kin1.yaml

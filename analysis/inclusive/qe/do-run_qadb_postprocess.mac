@@ -1,0 +1,1 @@
+python3 tools/qadb/qadb_pair_postprocess.py --pair-csv outputs/qe_pair_scan_spring23_kin0_pair_summary.csv --out-run-csv outputs/qadb_rgc_sp23_run_metadata.csv --out-pair-csv outputs/qe_pair_scan_spring23_kin0_pair_summary_qadb.csv
