@@ -55,6 +55,7 @@
 #include "TTree.h"
 #include "TBranch.h"
 #include <algorithm>
+#include <cctype>
 
 using namespace std;
 
@@ -210,6 +211,12 @@ struct EventInfo {
     // This preserves the old counter style event indexing if needed.
     int event_file_index = -9999;
 
+    // True input-HIPO-file provenance.
+    // input_file_index is the index in the current command's hipoFiles vector.
+    // input_file_number is parsed from the HIPO filename when possible.
+    int input_file_index = -9999;
+    int input_file_number = -9999;
+
     // Beam helicity from REC::Event.helicity.
     // Expected valid values are usually -1 and +1.
     // Anything else is treated as invalid.
@@ -261,6 +268,9 @@ struct ScalerBranchVars {
     int event = -9999;
     int event_file_index = -9999;
 
+    int input_file_index = -9999;
+    int input_file_number = -9999;
+
     int helicity = -9999;
     int helicity_valid = 0;
 
@@ -278,7 +288,19 @@ struct ScalerBranchVars {
 struct RunSummaryVars {
     int run = -9999;
 
+    int input_file_index = -9999;
+    int input_file_number = -9999;
+    string input_file_name = "";
+
     Long64_t n_events_all = 0;
+    Long64_t n_inclusive_written = 0;
+    Long64_t n_sidis_rows_written = 0;
+    Long64_t n_dihadron_rows_written = 0;
+
+    int first_event = -9999;
+    int last_event = -9999;
+    Long64_t first_timestamp = -9999;
+    Long64_t last_timestamp = -9999;
     Long64_t n_hel_plus_all = 0;
     Long64_t n_hel_minus_all = 0;
     Long64_t n_hel_zero_all = 0;
@@ -403,7 +425,9 @@ EventInfo getEventInfo(
     hipo::bank bankEvent,
     hipo::bank bankRunConfig,
     int event_file_index,
-    int fallback_run
+    int fallback_run,
+    int input_file_index,
+    int input_file_number
 );
 
 bool passElectronDetPidCuts(const DetectorInfo &eDet);
@@ -532,6 +556,9 @@ void fillScalerTree(
 
 // Small helper used only to make readable output ROOT file names.
 string getHadronTag(int pid);
+
+int extractInputFileNumber(const string &baseName);
+bool stringIsAllDigits(const string &s);
 
 // Container for one selected particle candidate.
 // This is not written directly as a vector or object to the ROOT file.
@@ -964,6 +991,14 @@ int main(int argc, char** argv) {
             std::string inName(inputFile);
             std::string baseName = inName.substr(inName.find_last_of("/\\") + 1);
 
+            const int input_file_index_this = static_cast<int>(n_argv);
+            const int input_file_number_this = extractInputFileNumber(baseName);
+
+            cout << "Input HIPO provenance:" << endl;
+            cout << "  input_file_index  = " << input_file_index_this << endl;
+            cout << "  input_file_number = " << input_file_number_this << endl;
+            cout << "  input_file_name   = " << baseName << endl;
+
             std::string outRootName = baseName;
             size_t hipoPos = outRootName.rfind(".hipo");
             if(hipoPos != std::string::npos){
@@ -1002,6 +1037,10 @@ int main(int argc, char** argv) {
             ScalerBranchVars scalerVars;
             RunSummaryVars runSummary;
 
+            runSummary.input_file_index = input_file_index_this;
+            runSummary.input_file_number = input_file_number_this;
+            runSummary.input_file_name = baseName;
+
             // State used to convert cumulative FCup scaler values into per read deltas.
             // These reset for each output skim file.
             // These were used for RUN::scaler cumulative difference logic.
@@ -1016,6 +1055,9 @@ int main(int argc, char** argv) {
             scalerTree->Branch("event",            &scalerVars.event,            "event/I");
             scalerTree->Branch("event_file_index", &scalerVars.event_file_index, "event_file_index/I");
 
+            scalerTree->Branch("input_file_index",  &scalerVars.input_file_index,  "input_file_index/I");
+            scalerTree->Branch("input_file_number", &scalerVars.input_file_number, "input_file_number/I");
+
             scalerTree->Branch("helicity",         &scalerVars.helicity,         "helicity/I");
             scalerTree->Branch("helicity_valid",   &scalerVars.helicity_valid,   "helicity_valid/I");
 
@@ -1027,9 +1069,21 @@ int main(int argc, char** argv) {
 
             TTree *runSummaryTree = new TTree("run_summary", "All-trigger run/file summary");
 
-            runSummaryTree->Branch("run",              &runSummary.run,              "run/I");
+            runSummaryTree->Branch("run",               &runSummary.run,               "run/I");
 
-            runSummaryTree->Branch("n_events_all",     &runSummary.n_events_all,     "n_events_all/L");
+            runSummaryTree->Branch("input_file_index",  &runSummary.input_file_index,  "input_file_index/I");
+            runSummaryTree->Branch("input_file_number", &runSummary.input_file_number, "input_file_number/I");
+            runSummaryTree->Branch("input_file_name",   &runSummary.input_file_name);
+
+            runSummaryTree->Branch("n_events_all",          &runSummary.n_events_all,          "n_events_all/L");
+            runSummaryTree->Branch("n_inclusive_written",   &runSummary.n_inclusive_written,   "n_inclusive_written/L");
+            runSummaryTree->Branch("n_sidis_rows_written",  &runSummary.n_sidis_rows_written,  "n_sidis_rows_written/L");
+            runSummaryTree->Branch("n_dihadron_rows_written",&runSummary.n_dihadron_rows_written,"n_dihadron_rows_written/L");
+
+            runSummaryTree->Branch("first_event",      &runSummary.first_event,      "first_event/I");
+            runSummaryTree->Branch("last_event",       &runSummary.last_event,       "last_event/I");
+            runSummaryTree->Branch("first_timestamp",  &runSummary.first_timestamp,  "first_timestamp/L");
+            runSummaryTree->Branch("last_timestamp",   &runSummary.last_timestamp,   "last_timestamp/L");
             runSummaryTree->Branch("n_hel_plus_all",   &runSummary.n_hel_plus_all,   "n_hel_plus_all/L");
             runSummaryTree->Branch("n_hel_minus_all",  &runSummary.n_hel_minus_all,  "n_hel_minus_all/L");
             runSummaryTree->Branch("n_hel_zero_all",   &runSummary.n_hel_zero_all,   "n_hel_zero_all/L");
@@ -1068,6 +1122,9 @@ int main(int argc, char** argv) {
             Int_t out_run = 0;
             Int_t out_event = 0;
             Int_t out_event_file_index = 0;
+
+            Int_t out_input_file_index = -9999;
+            Int_t out_input_file_number = -9999;
 
             Int_t out_run_config = -9999;
             Int_t out_event_config = -9999;
@@ -1210,6 +1267,9 @@ int main(int argc, char** argv) {
             skimTree->Branch("event",            &out_event,            "event/I");
             skimTree->Branch("event_file_index", &out_event_file_index, "event_file_index/I");
 
+            skimTree->Branch("input_file_index",  &out_input_file_index,  "input_file_index/I");
+            skimTree->Branch("input_file_number", &out_input_file_number, "input_file_number/I");
+
             skimTree->Branch("run_config",   &out_run_config,   "run_config/I");
             skimTree->Branch("event_config", &out_event_config, "event_config/I");
 
@@ -1349,6 +1409,9 @@ int main(int argc, char** argv) {
             Int_t elec_event = 0;
             Int_t elec_event_file_index = 0;
 
+            Int_t elec_input_file_index = -9999;
+            Int_t elec_input_file_number = -9999;
+
             Int_t elec_run_config = -9999;
             Int_t elec_event_config = -9999;
 
@@ -1425,6 +1488,9 @@ int main(int argc, char** argv) {
             electronTree->Branch("run",              &elec_run,              "run/I");
             electronTree->Branch("event",            &elec_event,            "event/I");
             electronTree->Branch("event_file_index", &elec_event_file_index, "event_file_index/I");
+
+            electronTree->Branch("input_file_index",  &elec_input_file_index,  "input_file_index/I");
+            electronTree->Branch("input_file_number", &elec_input_file_number, "input_file_number/I");
 
             electronTree->Branch("run_config",   &elec_run_config,   "run_config/I");
             electronTree->Branch("event_config", &elec_event_config, "event_config/I");
@@ -1520,6 +1586,9 @@ int main(int argc, char** argv) {
             Int_t di_run = 0;
             Int_t di_event = 0;
             Int_t di_event_file_index = 0;
+
+            Int_t di_input_file_index = -9999;
+            Int_t di_input_file_number = -9999;
 
             Int_t di_run_config = -9999;
             Int_t di_event_config = -9999;
@@ -1771,6 +1840,9 @@ int main(int argc, char** argv) {
             dihadronTree->Branch("event",            &di_event,            "event/I");
             dihadronTree->Branch("event_file_index", &di_event_file_index, "event_file_index/I");
 
+            dihadronTree->Branch("input_file_index",  &di_input_file_index,  "input_file_index/I");
+            dihadronTree->Branch("input_file_number", &di_input_file_number, "input_file_number/I");
+
             dihadronTree->Branch("run_config",   &di_run_config,   "run_config/I");
             dihadronTree->Branch("event_config", &di_event_config, "event_config/I");
 
@@ -1996,6 +2068,9 @@ int main(int argc, char** argv) {
             Int_t inc_event = 0;
             Int_t inc_event_file_index = 0;
 
+            Int_t inc_input_file_index = -9999;
+            Int_t inc_input_file_number = -9999;
+
             Int_t inc_run_config = -9999;
             Int_t inc_event_config = -9999;
 
@@ -2089,6 +2164,9 @@ int main(int argc, char** argv) {
             inclusiveTree->Branch("run",              &inc_run,              "run/I");
             inclusiveTree->Branch("event",            &inc_event,            "event/I");
             inclusiveTree->Branch("event_file_index", &inc_event_file_index, "event_file_index/I");
+
+            inclusiveTree->Branch("input_file_index",  &inc_input_file_index,  "input_file_index/I");
+            inclusiveTree->Branch("input_file_number", &inc_input_file_number, "input_file_number/I");
 
             inclusiveTree->Branch("run_config",   &inc_run_config,   "run_config/I");
             inclusiveTree->Branch("event_config", &inc_event_config, "event_config/I");
@@ -2247,13 +2325,35 @@ int main(int argc, char** argv) {
                     recEvent,
                     runConfig,
                     counter,
-                    Run_num
+                    Run_num,
+                    input_file_index_this,
+                    input_file_number_this
                 );
 
                 // All trigger helicity counters for comparison with the FCup macro.
                 // These are counted before any electron, SIDIS, detector, or region selection.
-                runSummary.run = evInfo.run;
+                if(evInfo.run > 0 && runSummary.run <= 0){
+                    runSummary.run = evInfo.run;
+                }
                 runSummary.n_events_all++;
+
+                if(runSummary.first_event < 0 || evInfo.event < runSummary.first_event){
+                    runSummary.first_event = evInfo.event;
+                }
+
+                if(runSummary.last_event < 0 || evInfo.event > runSummary.last_event){
+                    runSummary.last_event = evInfo.event;
+                }
+
+                if(evInfo.timestamp > 0){
+                    if(runSummary.first_timestamp < 0 || evInfo.timestamp < runSummary.first_timestamp){
+                        runSummary.first_timestamp = evInfo.timestamp;
+                    }
+
+                    if(runSummary.last_timestamp < 0 || evInfo.timestamp > runSummary.last_timestamp){
+                        runSummary.last_timestamp = evInfo.timestamp;
+                    }
+                }
 
                 if(evInfo.helicity == 1){
                     runSummary.n_hel_plus_all++;
@@ -2593,6 +2693,9 @@ int main(int argc, char** argv) {
                     inc_event = evInfo.event;
                     inc_event_file_index = evInfo.event_file_index;
 
+                    inc_input_file_index = evInfo.input_file_index;
+                    inc_input_file_number = evInfo.input_file_number;
+
                     inc_run_config = evInfo.run;
                     inc_event_config = evInfo.event;
 
@@ -2684,6 +2787,7 @@ int main(int argc, char** argv) {
 
                     if(writeRootOutput){
                         inclusiveTree->Fill();
+                        runSummary.n_inclusive_written++;
                     }
 
                     if(writeHipoOutput && !hipo_event_written_this_event){
@@ -2891,6 +2995,9 @@ int main(int argc, char** argv) {
                             di_run = evInfo.run;
                             di_event = evInfo.event;
                             di_event_file_index = evInfo.event_file_index;
+
+                            di_input_file_index = evInfo.input_file_index;
+                            di_input_file_number = evInfo.input_file_number;
 
                             di_run_config = evInfo.run;
                             di_event_config = evInfo.event;
@@ -3114,6 +3221,7 @@ int main(int argc, char** argv) {
 
                             if(writeRootOutput){
                                 dihadronTree->Fill();
+                                runSummary.n_dihadron_rows_written++;                
                             }
 
                             dihadron_pairs_written++;
@@ -3165,6 +3273,9 @@ int main(int argc, char** argv) {
                     elec_run = evInfo.run;
                     elec_event = evInfo.event;
                     elec_event_file_index = evInfo.event_file_index;
+
+                    elec_input_file_index = evInfo.input_file_index;
+                    elec_input_file_number = evInfo.input_file_number;
 
                     elec_run_config = evInfo.run;
                     elec_event_config = evInfo.event;
@@ -3294,6 +3405,9 @@ int main(int argc, char** argv) {
                         out_run = evInfo.run;
                         out_event = evInfo.event;
                         out_event_file_index = evInfo.event_file_index;
+
+                        out_input_file_index = evInfo.input_file_index;
+                        out_input_file_number = evInfo.input_file_number;
 
                         out_run_config = evInfo.run;
                         out_event_config = evInfo.event;
@@ -3434,6 +3548,7 @@ int main(int argc, char** argv) {
 
                         if(writeRootOutput){
                             skimTree->Fill();
+                            runSummary.n_sidis_rows_written++; 
                         }
 
                         pair_id++;
@@ -3558,6 +3673,9 @@ void fillScalerTree(
         scalerVars.event = evInfo.event;
         scalerVars.event_file_index = evInfo.event_file_index;
 
+        scalerVars.input_file_index = evInfo.input_file_index;
+        scalerVars.input_file_number = evInfo.input_file_number;
+
         // Match FCup_reading_summer2026_V1.cc:
         // use helicity from HEL::scaler, not REC::Event.
         scalerVars.helicity = bankHelScaler.getByte("helicity", irow);
@@ -3608,11 +3726,15 @@ EventInfo getEventInfo(
     hipo::bank bankEvent,
     hipo::bank bankRunConfig,
     int event_file_index,
-    int fallback_run){
+    int fallback_run,
+    int input_file_index,
+    int input_file_number){
 
     EventInfo info;
 
     info.event_file_index = event_file_index;
+    info.input_file_index = input_file_index;
+    info.input_file_number = input_file_number;
 
     // Fallbacks.
     // These are used if RUN::config is missing or empty.
@@ -4411,6 +4533,43 @@ string getHadronTag(int pid){
     if(pid == 2212) return "p";
 
     return "pid" + std::to_string(pid);
+}
+
+
+bool stringIsAllDigits(const string &s){
+    if(s.empty()){
+        return false;
+    }
+
+    for(char c : s){
+        if(!isdigit(static_cast<unsigned char>(c))){
+            return false;
+        }
+    }
+
+    return true;
+}
+
+int extractInputFileNumber(const string &baseName){
+    string stem = baseName;
+
+    size_t hipoPos = stem.rfind(".hipo");
+    if(hipoPos != string::npos){
+        stem = stem.substr(0, hipoPos);
+    }
+
+    size_t lastDot = stem.find_last_of('.');
+    if(lastDot == string::npos){
+        return -9999;
+    }
+
+    string token = stem.substr(lastDot + 1);
+
+    if(!stringIsAllDigits(token)){
+        return -9999;
+    }
+
+    return atoi(token.c_str());
 }
 
 // Calculate inclusive electron scattering kinematics.
