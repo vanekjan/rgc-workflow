@@ -6,7 +6,7 @@
 
 runner:
   # Backend script called by run_skim.py. Do not change this.
-  script: scripts/run_all_hipo.sh
+  script: scripts/run_all_hipo_new.sh
 
 input:
   # Dataset tag used in output names.
