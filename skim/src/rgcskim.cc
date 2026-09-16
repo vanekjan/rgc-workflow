@@ -715,6 +715,10 @@ int main(int argc, char** argv) {
         //   hipo
         //   both
         string outputFormat = "root";
+        
+        // Output path
+        // Optional argument to set custom output paht.
+        string outputPath = "./"; //default value
 
         // Optional diagnostic electron candidate tree.
         // Default = 0:
@@ -836,7 +840,18 @@ int main(int argc, char** argv) {
                 outputFormat = argv[iarg + 1];
                 iarg++;
 
-            }else{
+            }else if(arg == "--outpath"){
+
+                if(iarg + 1 >= n_argc){
+                    cout << "Error: " << arg << " requires output path." << endl;
+                    exit(1);
+                }
+
+                outputPath = argv[iarg + 1];
+                iarg++;
+
+            }
+            else{
 
                 hipoFiles.push_back(arg);
             }
@@ -1014,14 +1029,14 @@ int main(int argc, char** argv) {
             }
 
             if(skimMode == "sidis"){
-                outRootName = "rootfiles/skim_e" + hadronTag + "_" + outRootName;
-                outHipoName = "hipofiles/skim_e" + hadronTag + "_" + outHipoName;
+                outRootName = outputPath + "rootfiles/skim_e" + hadronTag + "_" + outRootName;
+                outHipoName = outputPath + "hipofiles/skim_e" + hadronTag + "_" + outHipoName;
             }else if(skimMode == "inclusive"){
-                outRootName = "rootfiles/skim_inclusive_" + outRootName;
+                outRootName = outputPath + "rootfiles/skim_inclusive_" + outRootName;
                 outHipoName = "hipofiles/skim_inclusive_" + outHipoName;
             }else if(skimMode == "dihadron"){
-                outRootName = "rootfiles/skim_epippim_" + outRootName;
-                outHipoName = "hipofiles/skim_epippim_" + outHipoName;
+                outRootName = outputPath + "rootfiles/skim_epippim_" + outRootName;
+                outHipoName = outputPath + "hipofiles/skim_epippim_" + outHipoName;
             }
 
             TFile *fout = nullptr;

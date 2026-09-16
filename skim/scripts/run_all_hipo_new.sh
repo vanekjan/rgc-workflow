@@ -128,6 +128,9 @@ RUN_RANGE_END=""
 # Optional extra output subfolder.
 JOB_TAG=""
 
+# Optional output base path
+OUT_PATH=""
+
 # Output format.
 OUTPUT_FORMAT="root"
 
@@ -406,6 +409,15 @@ while [ $# -gt 0 ]; do
                 exit 1
             fi
             JOB_TAG="$2"
+            shift 2
+            ;;
+            
+        --out-path)
+            if [ $# -lt 2 ]; then
+                echo "Error: --out-path requires a base path for the output."
+                exit 1
+            fi
+            OUT_PATH="$2"
             shift 2
             ;;
 
@@ -980,6 +992,14 @@ if [ -n "$JOB_TAG" ]; then
     LOG_OUT_DIR="${LOG_OUT_DIR}/${JOB_TAG}"
 fi
 
+if [ -n "$OUT_PATH" ]; then
+    ROOT_OUT_DIR="${OUT_PATH}/${ROOT_OUT_DIR}"
+    HIPO_OUT_DIR="${OUT_PATH}/${HIPO_OUT_DIR}"
+    LOG_OUT_DIR="${OUT_PATH}/${LOG_OUT_DIR}"
+    ROOT_BASE_DIR="${OUT_PATH}/$ROOT_BASE_DIR"
+    HIPO_BASE_DIR="${OUT_PATH}/$HIPO_BASE_DIR"
+fi
+
 mkdir -p "$ROOT_BASE_DIR"
 mkdir -p "$LOG_BASE_DIR"
 mkdir -p "$ROOT_OUT_DIR"
@@ -1028,6 +1048,7 @@ if [ "$RUN_SELECTION_MODE" = "range" ]; then
 fi
 
 echo "Job tag:           ${JOB_TAG:-none}"
+echo "Output path:           ${OUT_PATH:-none}"
 echo "Target map runs:   $TARGET_MAP_RUNS"
 echo "Target map skipped lines: $TARGET_MAP_SKIPPED_LINES"
 echo "Option tag:        $OPTION_TAG"
@@ -1211,6 +1232,7 @@ do
             --detpidcut "$DET_PID_CUT" \
             --kincut "$KIN_CUT" \
             --outformat "$OUTPUT_FORMAT" \
+            --outpath "$OUT_PATH" \
             "${TARGET_ARGS[@]}" \
             > "$LOGFILE" 2>&1
 
@@ -1220,6 +1242,7 @@ do
             --detpidcut "$DET_PID_CUT" \
             --kincut "$KIN_CUT" \
             --outformat "$OUTPUT_FORMAT" \
+            --outpath "$OUT_PATH" \
             "${TARGET_ARGS[@]}" \
             > "$LOGFILE" 2>&1
 
@@ -1230,6 +1253,7 @@ do
             --detpidcut "$DET_PID_CUT" \
             --kincut "$KIN_CUT" \
             --outformat "$OUTPUT_FORMAT" \
+            --outpath "$OUT_PATH" \
             "${TARGET_ARGS[@]}" \
             > "$LOGFILE" 2>&1
 
