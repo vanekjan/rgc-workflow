@@ -23,7 +23,7 @@ input:
   #   /lustre24/expphy/cache/clas12/rg-c/production/summer22/pass1/10.5gev/ND3/dst/train/sidisdvcs/
   #   /lustre24/expphy/cache/clas12/rg-c/production/spring23/pass1/ND3/dst/train/sidisdvcs/
   #   path:  /path/to/sidisdvcs/
-  path:  /lustre24/expphy/cache/clas12/rg-c/production/spring23/pass1/ET/dst/train/sidisdvcs/
+  path:  /lustre24/expphy/cache/clas12/rg-c/production/summer22/pass1/10.5gev/CH2/dst/train/sidisdvcs/
 
   # Output period subfolder.
   # Allowed:
@@ -129,7 +129,7 @@ run_selection:
   #   mode: test_one_run + targetfilter: matched
   # means:
   #   use the first HIPO file whose run appears in the target map.
-  mode: lisst
+  mode: list
 
   # Used only for mode: single.
   # Example:
@@ -148,8 +148,8 @@ run_selection:
   # Used only for mode: list.
   # Leading zeros are optional.
   # Example:
-  runs: [17766, 17767, 17768]
-  #runs: 
+  #   runs: [16270, 16272, 16275]
+  runs: [16298, 16299, 16300, 16302, 16303]
 
   # Used only for mode: file.
   # File format: one run number per line
@@ -175,5 +175,13 @@ output:
   # If empty, files are written directly into the normal channel folder.
   # For test_one_run, using a jobtag is recommended.
   #jobtag: test_one_run
-  jobtag: MT
+  jobtag: CH2
+  
+  # Optional base path to redirect output to a custom location
+  # Recommended when install location doesn't provide enough disk storage
+  # Example:
+  #   out_path: /lustre24/expphy/volatile/hallc/tensor/
+  # If empty, output files, logs, and corresponding folders will be created in location where "run_skim.py" is executed.
+  # out_path: 
+  out_path: /lustre24/expphy/volatile/hallc/tensor/vanekjan/Genesis/
   

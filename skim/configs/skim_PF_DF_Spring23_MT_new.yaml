@@ -177,3 +177,12 @@ output:
   #jobtag: test_one_run
   jobtag: MT
   
+  # Optional base path to redirect output to a custom location
+  # Recommended when install location doesn't provide enough disk storage
+  # Example:
+  #   out_path: /lustre24/expphy/volatile/hallc/tensor/
+  # If empty, output files, logs, and corresponding folders will be created in location where "run_skim.py" is executed.
+  # out_path: 
+  out_path: /lustre24/expphy/volatile/hallc/tensor/vanekjan/Genesis/
+  
+  

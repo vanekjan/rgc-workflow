@@ -148,7 +148,7 @@ run_selection:
   # Used only for mode: list.
   # Leading zeros are optional.
   # Example:
-  runs: [17766, 17767, 17768]
+  runs: [17763, 17764, 17765]
   #runs: 
 
   # Used only for mode: file.
@@ -175,5 +175,13 @@ output:
   # If empty, files are written directly into the normal channel folder.
   # For test_one_run, using a jobtag is recommended.
   #jobtag: test_one_run
-  jobtag: MT
+  jobtag: F
+  
+  # Optional base path to redirect output to a custom location
+  # Recommended when install location doesn't provide enough disk storage
+  # Example:
+  #   out_path: /lustre24/expphy/volatile/hallc/tensor/
+  # If empty, output files, logs, and corresponding folders will be created in location where "run_skim.py" is executed.
+  # out_path: 
+  out_path: /lustre24/expphy/volatile/hallc/tensor/vanekjan/Genesis/
   
