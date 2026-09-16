@@ -129,7 +129,7 @@ run_selection:
   #   mode: test_one_run + targetfilter: matched
   # means:
   #   use the first HIPO file whose run appears in the target map.
-  mode: lisst
+  mode: list
 
   # Used only for mode: single.
   # Example:
