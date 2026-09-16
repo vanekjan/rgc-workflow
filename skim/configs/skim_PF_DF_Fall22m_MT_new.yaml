@@ -175,7 +175,7 @@ output:
   # If empty, files are written directly into the normal channel folder.
   # For test_one_run, using a jobtag is recommended.
   #jobtag: test_one_run
-  jobtag: MT
+  jobtag: MT_m
   
   # Optional base path to redirect output to a custom location
   # Recommended when install location doesn't provide enough disk storage
